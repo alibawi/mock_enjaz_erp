@@ -1,8 +1,4 @@
-import {
-  Archive, Bell, BellRing, Boxes, Building2, ChevronLeft, ClipboardList, Factory, FileSignature, FolderKanban, Globe, Handshake, Home,
-  Landmark, Languages, Menu, Settings, Shield, ShoppingBag, ShoppingCart, Store, TrendingUp, Truck, Users,
-  type LucideIcon,
-} from 'lucide-react'
+import { ChevronLeft, ClipboardList, FileSignature, Menu, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { assetNav } from '../modules/assets/components/Layout'
@@ -13,13 +9,6 @@ import { contractNav } from '../modules/contracts/lib/navigation'
 import { CONTRACTS_BASE } from '../modules/contracts/router'
 
 interface NavEntry { to: string; label: string; icon: LucideIcon; section?: string; soon?: boolean; sub?: boolean }
-
-const otherModules: [string, LucideIcon][] = [
-  ['الإدارة', Building2], ['إدارة الشحن', Truck], ['نقاط البيع', Store], ['المبيعات', ShoppingCart], ['السوق', Globe],
-  ['إدارة المخزون', Boxes], ['إدارة الموارد البشرية', Users], ['المالية', Landmark], ['أمان', Shield],
-  ['المشتريات', ShoppingBag], ['الأرشيف', Archive], ['الاستثمارات', TrendingUp], ['إدارة علاقات العملاء', Handshake],
-  ['إدارة المشاريع', FolderKanban], ['التصنيع', Factory],
-]
 
 const item = 'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-gray-700 hover:bg-gray-100'
 
@@ -77,9 +66,8 @@ function ModuleGroup({ base, title, icon: Icon, entries, endPaths, collapsed }: 
 }
 
 export function Sidebar() {
-  const { toast, can, db } = useContractsStore()
+  const { can, db } = useContractsStore()
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 900)
-  const outOfScope = () => toast('هذه الوحدة خارج نطاق النموذج التجريبي')
   const contractEntries = contractNav.filter((n) => (n.module !== 'analytics' || can('Reports.View')) && (!n.feature || featureOn(db, n.feature)) && (n.module !== 'settings-access' || n.to === '/settings/approval-stages' || can('Settings.Manage')))
 
   return (
@@ -95,34 +83,11 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        <NavLink to="/" end title="الرئيسية" className={({ isActive }) => `${item} ${isActive ? 'bg-navy-50 font-semibold text-navy' : ''}`}>
-          <Home className="h-[18px] w-[18px] shrink-0" />
-          {!collapsed && <span className="flex-1 text-start">الرئيسية</span>}
-        </NavLink>
-
         <ModuleGroup base={ASSETS_BASE} title="الموجودات الثابتة" icon={ClipboardList} entries={assetNav} endPaths={['/']} collapsed={collapsed} />
         <ModuleGroup base={CONTRACTS_BASE} title="إدارة العقود" icon={FileSignature} entries={contractEntries} endPaths={['/', '/reports', '/service', '/agreements']} collapsed={collapsed} />
 
-        {otherModules.map(([label, Icon]) => (
-          <button key={label} type="button" onClick={outOfScope} className={item} title={label}>
-            <Icon className="h-[18px] w-[18px] shrink-0 text-gray-500" />
-            {!collapsed && <><span className="flex-1 text-start">{label}</span><ChevronLeft className="h-3.5 w-3.5 text-gray-400" /></>}
-          </button>
-        ))}
-        <button type="button" onClick={outOfScope} className={item} title="الإشعارات">
-          <Bell className="h-[18px] w-[18px] shrink-0 text-gray-500" />
-          {!collapsed && <><span className="flex-1 text-start">الإشعارات</span><ChevronLeft className="h-3.5 w-3.5 text-gray-400" /></>}
-        </button>
       </nav>
 
-      <div className="space-y-0.5 border-t border-line p-2">
-        {([['الإعدادات', Settings], ['اللغة', Languages], ['الاشعارات', BellRing]] as [string, LucideIcon][]).map(([label, Icon]) => (
-          <button key={label} type="button" onClick={outOfScope} className={item} title={label}>
-            <Icon className="h-[18px] w-[18px] shrink-0 text-gray-500" />
-            {!collapsed && <span className="flex-1 text-start">{label}</span>}
-          </button>
-        ))}
-      </div>
     </aside>
   )
 }
