@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>قرارات مطلوبة من الإدارة - وحدة إدارة العقود</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2433; --muted:#5b6578; --line:#d9dde6; --accent:#1f5fbf; --soft:#eaf1fc; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151c; --card:#1b2029; --ink:#e8ebf2; --muted:#9aa4b8; --line:#2d3544; --accent:#6aa3ff; --soft:#1e2b44; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"Segoe UI",Tahoma,"Noto Naskh Arabic",Arial,sans-serif; line-height:1.9; }
+  .wrap { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+  header { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 24px; }
+  h1 { margin:0 0 6px; font-size:1.5rem; }
+  h2 { margin:0 0 4px; font-size:1.1rem; }
+  p { margin:6px 0; }
+  .muted { color:var(--muted); font-size:.92rem; }
+  .meta { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px 16px; margin-top:12px; }
+  .meta label { display:block; font-size:.85rem; color:var(--muted); }
+  input[type=text], input[type=number], textarea, select {
+    width:100%; font:inherit; color:inherit; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+  textarea { min-height:70px; resize:vertical; }
+  .q { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 22px; margin-top:16px; }
+  .tag { display:inline-block; background:var(--soft); color:var(--accent); border-radius:6px; padding:0 8px; font-size:.8rem; margin-inline-start:8px; }
+  .why { background:var(--soft); border-radius:8px; padding:8px 12px; font-size:.92rem; margin:8px 0; }
+  .opt { display:block; padding:8px 10px; margin:6px 0; border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+  .opt:hover { border-color:var(--accent); }
+  .opt input { margin-inline-end:8px; }
+  .opt small { display:block; color:var(--muted); margin-inline-start:26px; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; font-size:.95rem; }
+  th, td { border:1px solid var(--line); padding:6px 8px; text-align:right; vertical-align:middle; }
+  th { background:var(--soft); }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:24px; }
+  button { font:inherit; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 18px; cursor:pointer; }
+  button.alt { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+  .sign { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:16px; }
+  .sign div { border-top:1px solid var(--ink); padding-top:6px; text-align:center; margin-top:36px; }
+  #toast { position:fixed; inset-inline:0; bottom:16px; text-align:center; display:none; }
+  #toast span { background:#222; color:#fff; padding:8px 16px; border-radius:8px; }
+  @media print {
+    body { background:#fff; color:#000; }
+    .actions, #toast { display:none; }
+    .q, header { break-inside:avoid; border-color:#999; }
+    input, textarea, select { border:1px solid #999; background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>قرارات مطلوبة من الإدارة: وحدة إدارة العقود في نظام JasimERP</h1>
+  <p class="muted">أعدّ فريق التطوير خطة تحليل وتصميم متكاملة لوحدة إدارة العقود. قبل البدء بالتنفيذ نحتاج إلى قرارات الإدارة في الأسئلة التالية، لأنها تحدد سلوك النظام وليست قرارات تقنية. يكفي اختيار الإجابة المناسبة وكتابة أي ملاحظة، ثم الطباعة أو حفظ الملف بصيغة PDF وإعادته إلى الفريق.</p>
+
+  <h2 style="margin-top:14px">ما الذي ستقدمه الوحدة؟</h2>
+  <p class="muted">إدارة دورة حياة العقد بالكامل (مسودة، اعتماد، توقيع، سريان، تعليق، انتهاء، تجديد، إنهاء)، وحفظ العقود الموقعة، وتتبع التزامات العقود التجارية مع العملاء والموردين (الكميات والقيم المتفق عليها وما تم تنفيذه منها فعلياً من أوامر البيع والشراء والتسليم والفواتير)، وتنبيهات الانتهاء والتجديد، وتقارير ولوحة متابعة. ولا تُنشئ الوحدة قيوداً محاسبية، فالمحاسبة تبقى ضمن الوحدة المالية.</p>
+
+  <div class="meta">
+    <div><label>اسم المجيب</label><input type="text" id="who"></div>
+    <div><label>المنصب</label><input type="text" id="role"></div>
+    <div><label>التاريخ</label><input type="text" id="date"></div>
+  </div>
+</header>
+
+<!-- Q-17 -->
+<section class="q" data-q="q17">
+  <h2>١. اعتماد العقود <span class="tag" dir="ltr">Q-17</span><span class="tag">قرار متخذ</span></h2>
+  <div class="why">تم القرار: يعمل الاعتماد عبر Elsa Workflow الموجود في النظام. ينشئ المستخدم العقد ويعتمده مستخدمون آخرون على 3 أو 5 مراحل أو أكثر حسب المبلغ وسياسة المؤسسة.</div>
+  <p>المطلوب من الإدارة عند الإعداد فقط: تحديد قائمة المراحل وجهاتها لكل شريحة مبلغ. يُنفَّذ ذلك لاحقاً من مصمم سير العمل دون تعديل برمجي.</p>
+  <textarea id="n_q17" placeholder="شرائح المبالغ وجهات الاعتماد المقترحة (اختياري)"></textarea>
+</section>
+
+<!-- Q-03 -->
+<section class="q" data-q="q03">
+  <h2>٢. تجاوز الكمية أو القيمة وطريقة الاحتساب <span class="tag" dir="ltr">Q-03</span><span class="tag">قرار متخذ</span></h2>
+  <div class="why">تم القرار: تُضبط من إعدادات النظام (منع أو تحذير أو تتبع فقط، ومتى تُحتسب الكمية: أمر أو تسليم أو فاتورة). الافتراضي المقترح: تحذير، والاحتساب عند الأمر. يمكن تغييرها لاحقاً دون تعديل برمجي.</div>
+  <textarea id="n_q03" placeholder="القيم الأولية المطلوبة عند التشغيل (اختياري)"></textarea>
+</section>
+
+<!-- returns -->
+<section class="q" data-q="ret">
+  <h2>٣. عند إرجاع بضاعة مرتبطة بعقد، هل تعود الكمية المرجَعة إلى رصيد العقد؟<span class="tag">قرار إلزامي</span> <span class="tag" dir="ltr">Q-02</span></h2>
+  <div class="why">مثال: سُلّمت ١٠٠ وحدة ثم أُرجعت ١٠ وحدات. هل يصبح المتبقي من العقد أكبر بمقدار ١٠؟</div>
+  <label class="opt"><input type="radio" name="ret" value="yes" checked> نعم، تعود إلى الرصيد<small>موصى به، وهو ما تفعله أنظمة ERP الكبرى مثل مايكروسوفت داينامكس</small></label>
+  <label class="opt"><input type="radio" name="ret" value="no"> لا، تُعتبر الكمية مستهلكة ولو أُرجعت</label>
+  <textarea id="n_ret" placeholder="ملاحظات"></textarea>
+</section>
+
+<!-- Q-06 -->
+<section class="q" data-q="q06">
+  <h2>٤. اختلاف العملة <span class="tag" dir="ltr">Q-06</span><span class="tag">قرار متخذ</span></h2>
+  <div class="why">تم القرار: يقبل العقد مستنداً بأي عملة ويحوّل قيمته إلى عملة العقد. يُختار سعر التحويل من إعدادات النظام: سعر الصرف المسجل عند تفعيل العقد (الافتراضي، لأنه ثابت وسهل التدقيق)، أو سعر تاريخ المستند. لا توثّق الأنظمة المرجعية الثلاثة (ساب وأودو وداينامكس) في صفحاتها الرسمية التي قرأناها قاعدة صريحة لذلك، فهذه القاعدة تصميم خاص بالنظام.</div>
+  <textarea id="n_q06" placeholder="ملاحظات (اختياري)"></textarea>
+</section>
+
+<!-- Q-04 -->
+<section class="q" data-q="q04">
+  <h2>٥. المنشآت <span class="tag" dir="ltr">Q-04</span><span class="tag">قرار متخذ</span></h2>
+  <div class="why">تم القرار: لكل عقد منشأة واحدة في الإصدار الأول.</div>
+  <textarea id="n_q04" placeholder="ملاحظات (اختياري)"></textarea>
+</section>
+
+<!-- scope -->
+<section class="q" data-q="scope">
+  <h2>٦. نطاق الإصدار الأول <span class="tag">معتمد</span></h2>
+  <div class="why">تم الاعتماد: يشمل الإصدار الأول كل البنود التالية، بما فيها ما كان مقترحاً للإصدار الثاني.</div>
+  <label class="opt"><input type="checkbox" class="sc" checked> أنواع العقود، وبيانات العقد والأطراف، ودورة الحياة والاعتماد عبر Elsa، وحفظ العقد الموقع</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> عقود التوريد مع العملاء والموردين: الكميات والقيم والأسعار والمتبقي، بأي عملة</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> الملاحق والتعديلات على العقود السارية مع حفظ كل نسخة</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> تنبيهات الانتهاء والتجديد، والتقارير الأساسية، واللوحة الرئيسية، وإعدادات النظام</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> الالتزامات والمراحل والغرامات، وجدول الدفعات والملخص المالي</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> القوالب ومكتبة البنود، وطباعة العقد</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> عقود الصيانة والخدمة واتفاقيات مستوى الخدمة (جانب العقد، وتكتمل مع وحدتي الصيانة والأصول)</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> التوقيع الإلكتروني (يتطلب اختيار مزوّد الخدمة)</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> الفوترة الدورية التلقائية (تُنشأ المستندات عبر المبيعات والمشتريات)</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> التزامات مجموعات الأصناف، وجداول التسليم، واتفاقيات المكافأة العامة، والتجديد التلقائي، ومقارنة النسخ، والمخاطر المتقدمة</label>
+  <label class="opt"><input type="checkbox" class="sc" checked> تفويض الاعتماد</label>
+  <textarea id="n_scope" placeholder="ملاحظات (اختياري)"></textarea>
+</section>
+
+<!-- reminders -->
+<section class="q" data-q="rem">
+  <h2>٧. تنبيهات الانتهاء والتجديد<span class="tag">معتمد</span></h2>
+  <p>قبل كم يوم من انتهاء العقد يُرسل التنبيه؟ <input type="text" id="remDays" value="30, 15, 7, 1" style="width:200px"> <span class="muted">(القيمة المقترحة)</span></p>
+  <p>مدة السماح لتجديد عقد انتهى: <input type="number" id="grace" value="90" style="width:90px"> يوماً</p>
+  <p>عند وجود مدة إشعار قبل الإنهاء، يُنبَّه صاحب العقد قبل آخر موعد للإشعار بـ <input type="text" id="notice" value="14, 7, 1" style="width:140px"> أيام.</p>
+  <p>مَن يتلقى تنبيهات التصعيد (تبقّى يوم أو سبعة أيام)؟ <input type="text" id="escal" value="مدير العقود"></p>
+</section>
+
+<!-- confidentiality -->
+<section class="q" data-q="conf">
+  <h2>٨. سرية العقود<span class="tag">معتمد</span></h2>
+  <p>يقترح الفريق ثلاثة مستويات: عادي، سري، شديد السرية. السري وشديد السرية لا يراهما إلا من يملك صلاحية خاصة، ومرفقاتهما محمية بالمثل.</p>
+  <label class="opt"><input type="radio" name="cf" value="3" checked> نعتمد المستويات الثلاثة</label>
+  <label class="opt"><input type="radio" name="cf" value="2"> مستويان فقط: عادي وسري</label>
+  <p>أنواع العقود التي تُعامل كسرية افتراضياً: <input type="text" id="confTypes" value="عقود العمل، اتفاقيات عدم الإفصاح"></p>
+</section>
+
+<section class="q" data-q="other">
+  <h2>٩. أي أمور أخرى</h2>
+  <p>أنواع عقود لا ينبغي أن ننساها، أو تقارير مطلوبة، أو جهات يجب إشراكها (القانونية، المالية، المشتريات...):</p>
+  <textarea id="n_other" style="min-height:110px"></textarea>
+</section>
+
+<div class="sign">
+  <div>اسم وتوقيع المسؤول</div>
+  <div>التاريخ</div>
+</div>
+
+<div class="actions">
+  <button onclick="window.print()">طباعة / حفظ PDF</button>
+  <button class="alt" onclick="copySummary()">نسخ ملخص الإجابات</button>
+</div>
+<div id="toast"><span></span></div>
+
+</div>
+<script>
+  document.getElementById('date').value = new Date().toLocaleDateString('ar');
+  function val(name) { const e = document.querySelector('input[name="'+name+'"]:checked'); return e ? e.parentElement.childNodes[1].textContent.trim() : ''; }
+  function v(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+  function copySummary() {
+    const sc = [...document.querySelectorAll('.sc:checked')].map(e => '- ' + e.parentElement.textContent.trim()).join('\n');
+    const lines = [
+      'ملخص قرارات الإدارة - وحدة إدارة العقود',
+      'المجيب: ' + v('who') + ' | المنصب: ' + v('role') + ' | التاريخ: ' + v('date'),
+      '',
+      '1) الاعتماد (Elsa): ' + v('n_q17'),
+      '2) الإعدادات الأولية: ' + v('n_q03'),
+      '3) المرتجعات: ' + val('ret') + ' | ملاحظات: ' + v('n_ret'),
+      '4) العملة: ' + v('n_q06'),
+      '5) عقود متعددة المنشآت: ' + 'منشأة واحدة لكل عقد | ملاحظات: ' + v('n_q04'),
+      '6) النطاق:\n' + sc + '\n   ملاحظات: ' + v('n_scope'),
+      '7) التنبيهات: ' + v('remDays') + ' | السماح: ' + v('grace') + ' يوم | الإشعار: ' + v('notice') + ' | التصعيد: ' + v('escal'),
+      '8) السرية: ' + val('cf') + ' | أنواع سرية: ' + v('confTypes'),
+      '9) أخرى: ' + v('n_other')
+    ].join('\n');
+    const done = () => { const t = document.getElementById('toast'); t.style.display = 'block'; t.firstElementChild.textContent = 'تم نسخ الملخص'; setTimeout(() => t.style.display = 'none', 2000); };
+    if (navigator.clipboard) navigator.clipboard.writeText(lines).then(done, () => prompt('انسخ النص:', lines));
+    else prompt('انسخ النص:', lines);
+  }
+</script>
+</body>
+</html>

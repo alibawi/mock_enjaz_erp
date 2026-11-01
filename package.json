@@ -1,0 +1,37 @@
+{
+  "name": "enjaz-erp-mock",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "check:assets": "esbuild scripts/assets/engine-check.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/assets-engine-check.mjs --log-level=warning && node node_modules/.cache/assets-engine-check.mjs",
+    "check:contracts": "esbuild scripts/contracts/integrity-check.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-integrity-check.mjs --log-level=warning && node node_modules/.cache/contracts-integrity-check.mjs",
+    "check:contracts:agreements": "esbuild scripts/contracts/flow-agreements.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-agreements.mjs --log-level=warning && node node_modules/.cache/contracts-flow-agreements.mjs",
+    "check:contracts:amendments": "esbuild scripts/contracts/flow-amendments.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-amendments.mjs --log-level=warning && node node_modules/.cache/contracts-flow-amendments.mjs",
+    "check:contracts:finance": "esbuild scripts/contracts/flow-finance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-finance.mjs --log-level=warning && node node_modules/.cache/contracts-flow-finance.mjs",
+    "check:contracts:templates": "esbuild scripts/contracts/flow-templates.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-templates.mjs --log-level=warning && node node_modules/.cache/contracts-flow-templates.mjs",
+    "check:contracts:service": "esbuild scripts/contracts/flow-service.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-service.mjs --log-level=warning && node node_modules/.cache/contracts-flow-service.mjs",
+    "check:contracts:settings": "esbuild scripts/contracts/flow-settings.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-settings.mjs --log-level=warning && node node_modules/.cache/contracts-flow-settings.mjs",
+    "check:contracts:analytics": "esbuild scripts/contracts/flow-analytics.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-analytics.mjs --log-level=warning && node node_modules/.cache/contracts-flow-analytics.mjs",
+    "check": "npm run check:assets && npm run check:contracts"
+  },
+  "dependencies": {
+    "lucide-react": "0.460.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.28.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.49",
+    "tailwindcss": "3.4.15",
+    "typescript": "5.6.3",
+    "vite": "5.4.11"
+  }
+}
