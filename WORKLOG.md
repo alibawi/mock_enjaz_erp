@@ -17,3 +17,9 @@ Append-only. Module-level history: `docs/assets/WORKLOG.md`, `docs/contracts/WOR
 - Upstream added the installments feature: `data/installments.ts`, `pages/finance/ScheduleChanges.tsx`, `scripts/flow-installments.ts`, route `/installments`, nav item «الأقساط: تأجيل وتقسيم ودمج», plus edits to `integrity`, `lifecycle`, `payments`, `permissions`, `reports`, `settings`, `store`, `types`, seed files and three pages.
 - Method: re-copied upstream `src` through the same transforms (router imports → module `router.tsx`), synced every file except `App.tsx` / `Layout.tsx` (restructured here; `Layout.tsx` unchanged upstream, `App.tsx` gained only the new import + route, applied by hand to `ContractsApp.tsx`). Scripts re-copied with repointed imports; `docs/contracts` refreshed (WORKLOG updated).
 - New script `check:contracts:installments`. Verified: `tsc -b`, build, `npm run check` and all 8 contracts flow checks pass.
+
+## 2026-11-02 — Re-merge updated assets_mock
+
+- Upstream changes: terminology «إهلاك» → «اندثار» across the module, plus edits to `calc`, `asof`, `documents`, `format`, `lifecycle`, `permissions`, `seed`, `store` and most pages (Dashboard, Depreciation, Reports, Settings, SalesInvoices, AssetDocs, AssetForm, MasterData, OpeningBalances, Shared); `docs/assets` (plan addendum, README, WORKLOG) refreshed.
+- Method as before: re-copied upstream `src` through the router-import transform and synced every file except `App.tsx` (routes unchanged → `AssetsApp.tsx` untouched) and `Layout.tsx` (only 3 nav labels changed upstream, applied by hand). `scripts/assets` was already identical, no new scripts, `package.json` unchanged.
+- Verified: `tsc -b`, build, `check:assets` and `check:contracts` pass.
