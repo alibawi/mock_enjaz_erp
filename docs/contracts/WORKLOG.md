@@ -277,3 +277,21 @@
 
 ## 2026-10-31 — Reports in the sidebar
 Each of the 17 reports is now its own menu item under «التقارير» (grouped: العقود، التنفيذ، القيمة، المتابعة) with an «كل التقارير» entry first; generated from the report registry so new reports appear automatically. Permission «التقارير» still hides the whole section. Verified: tsc, build, 18 report links present in the sidebar DOM (labels not inspected visually: the pane is narrow so the sidebar was collapsed).
+
+## 2026-11-02 — Installments by payment term, deferral, split and merge (plan doc 16 / ADR-27)
+**Completed**
+- Payment terms carry installments (Finance `PaymentTermInstallment`): seeded INST3 (34/33/33 at 30/60/90), INST4Q (quarterly), ADV20+4 (20 % advance + four). Engine `installments.ts`.
+- Draft contracts: «توليد من شرط الدفع» with preview (contract value × %, rounding on the last item, due = base date + days); refused once an item is invoiced or after Draft.
+- After Draft: date/amount of a Planned item are locked in the edit dialog and delete is refused; changes go through a request — تأجيل (later date, ≤ contract end unless the setting allows, keeps the original date, counts deferrals up to `Schedule.MaxDeferralsPerItem`), تقسيم (2–12 parts, total must equal the item), دمج (2+ items into one, the others cancelled). The total never changes (value changes are amendments). Requester ≠ approver; new permissions `Schedule.RequestChange` / `Schedule.ApproveChange`; rejection needs a reason; one open request per item and the item cannot be billed meanwhile; stale requests are refused at approval; termination cancels unbilled items and withdraws open requests.
+- Derived status «مدفوعة جزئياً»; overdue days on unbilled items.
+- Screens: schedule card (generate, defer, split, merge, original date and open-request markers), «طلبات تغيير الجدول» card on the financial tab, new page `/installments` (pending approvals, overdue installments, all requests) in the sidebar, report R-18 «الأقساط المستحقة والمتأخرة». Contract card accepts `?tab=`.
+- Seed: c-24 generated quarterly with one approved deferral; c-18 (USD) generated 20 %+4 with a partial payment and a pending split of an overdue item; c-26 (Draft) left empty to try generation.
+- Integrity: split source, deferral without original date, planned items after termination, requester-approved changes, open requests on billed items, two open requests on one item. New suite `npm run check:installments` (40 checks).
+
+**Verification (actual):** `tsc` clean; `npm run check` and all nine `check:*` suites pass (analytics count updated to 18 reports). Browser: on c-18 submitted a deferral as admin, approved it and the seeded split as the contracts manager from `/installments`; the schedule showed the new dates, the split part #6 and 100 % total; generated a 3-installment schedule on c-26; R-18 lists 21 rows; no console errors.
+
+**Not done:** invoice-level installments (Finance prerequisite F-INST in plan doc 16 §8) are only described, not simulated; no screenshot of the `/installments` page at a wide viewport.
+
+## 2026-11-02 — Installments step in the new-contract wizard
+The contract wizard has a new step 4 «الأقساط» (7 steps now). Entering it with an empty schedule generates the installments from the chosen payment term (the partner's default term is pre-filled in step 2); changing the term in the step regenerates while the rows still come from a term. Rows are editable (kind, date, %, amount with the other recalculated), manual rows can be added and removed, and the step shows whether the total equals the contract value; the review step shows the count and total and warns on a mismatch. Saving the draft writes the schedule to the contract; for a contract outside Draft (or with a billed item) the step is read-only and points to the financial tab. The financial-tab generate dialog now defaults to the contract's own payment term.
+**Verification:** tsc clean, all nine check suites pass. Browser (dev server on 5173): new maintenance contract, value 60,000,000, partner default NET30 produced one installment, switching to «ثلاثة أقساط 30/60/90» produced 20.4M / 19.8M / 19.8M; after «حفظ كمسودة» the financial tab shows the three items, total 100 %. No console errors. Not tried: editing an existing draft through the wizard.

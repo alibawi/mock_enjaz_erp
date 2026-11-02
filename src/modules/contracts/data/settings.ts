@@ -31,6 +31,8 @@ export const settingDefs: SettingDef[] = [
   { key: 'Renewal.GraceDays', group: 'التنبيهات', label: 'مدة السماح لتجديد عقد منتهٍ (يوم)', kind: 'number', default: 90, description: 'يمكن تمديد أو تجديد العقد المنتهي خلال هذه المدة.' },
   { key: 'Approval.ReminderDays', group: 'التنبيهات', label: 'تذكير بالاعتماد المعلّق بعد (يوم)', kind: 'number', default: 2, description: 'يُنبَّه المعتمد الحالي بعد هذه المدة.' },
   { key: 'Approval.AllowCreatorApproval', group: 'الاعتماد', label: 'السماح لمنشئ العقد باعتماده', kind: 'bool', default: false, description: 'الأصل: يُمنع المنشئ من اعتماد عقده (فصل المهام).' },
+  { key: 'Schedule.MaxDeferralsPerItem', group: 'جدول الدفعات', label: 'أقصى عدد لتأجيل القسط الواحد', kind: 'number', default: 3, description: 'بعده لا يُؤجَّل القسط إلا بملحق.' },
+  { key: 'Schedule.AllowBeyondEndDate', group: 'جدول الدفعات', label: 'السماح بتأجيل قسط إلى ما بعد انتهاء العقد', kind: 'bool', default: false, description: 'الأصل: تاريخ القسط الجديد لا يتجاوز تاريخ انتهاء العقد (إلا العقود مفتوحة المدة).' },
   { key: 'Feature.Obligations', group: 'تفعيل الميزات', label: 'الالتزامات والدفعات', kind: 'bool', default: true, description: 'إخفاء/إظهار تبويبات وقوائم الالتزامات والمالية.' },
   { key: 'Feature.Templates', group: 'تفعيل الميزات', label: 'القوالب والبنود والطباعة', kind: 'bool', default: true, description: 'إخفاء/إظهار القوالب والبنود.' },
   { key: 'Feature.Service', group: 'تفعيل الميزات', label: 'عقود الخدمة', kind: 'bool', default: true, description: 'إخفاء/إظهار عقود الخدمة واتفاقيات مستوى الخدمة.' },

@@ -28,6 +28,8 @@ export const allPerms: { code: Perm; group: string; label: string }[] = [
   { code: 'Obligations.Manage', group: 'الالتزامات', label: 'إدارة الالتزامات والدفعات' },
   { code: 'Obligations.Complete', group: 'الالتزامات', label: 'إنجاز التزام' },
   { code: 'Obligations.Accept', group: 'الالتزامات', label: 'قبول الإنجاز' },
+  { code: 'Schedule.RequestChange', group: 'الالتزامات', label: 'طلب تأجيل/تقسيم/دمج أقساط' },
+  { code: 'Schedule.ApproveChange', group: 'الالتزامات', label: 'اعتماد تغيير جدول الأقساط' },
   { code: 'ApprovalDelegations.Manage', group: 'الاعتماد', label: 'إدارة تفويضات الغير' },
   { code: 'Reports.View', group: 'التقارير', label: 'التقارير' },
   { code: 'Settings.Manage', group: 'الإعداد', label: 'إعدادات النظام والصلاحيات' },
@@ -48,15 +50,15 @@ const P = (...p: Perm[]) => p
 const viewer: Perm[] = ['Contracts.View', 'Attachments.View', 'Attachments.Download']
 
 export const defaultRolePerms: Record<RoleId, Perm[]> = {
-  requester: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Delete', 'Contracts.Submit', 'Contracts.Cancel', 'Attachments.Upload', 'Obligations.Manage')],
-  approver: [...viewer, ...P('Contracts.Approve', 'Contracts.Reject', 'ApprovalDelegations.Manage', 'Reports.View')],
+  requester: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Delete', 'Contracts.Submit', 'Contracts.Cancel', 'Attachments.Upload', 'Obligations.Manage', 'Schedule.RequestChange')],
+  approver: [...viewer, ...P('Contracts.Approve', 'Contracts.Reject', 'ApprovalDelegations.Manage', 'Reports.View', 'Schedule.ApproveChange')],
   manager: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Submit', 'Contracts.Activate', 'Contracts.Suspend', 'Contracts.Terminate', 'Contracts.Cancel',
     'Contracts.Approve', 'Contracts.Reject', 'Contracts.Amend', 'Contracts.Renew', 'Contracts.Export', 'Attachments.Upload', 'Attachments.Delete', 'Fulfillment.Recalculate', 'Obligations.Manage', 'Obligations.Accept',
-    'Templates.Manage', 'ContractTypes.Manage', 'Reports.View', 'ApprovalDelegations.Manage')],
+    'Templates.Manage', 'ContractTypes.Manage', 'Reports.View', 'ApprovalDelegations.Manage', 'Schedule.RequestChange', 'Schedule.ApproveChange')],
   legal: [...viewer, ...P('Contracts.Approve', 'Contracts.Reject', 'Contracts.ViewConfidential', 'Contracts.Amend', 'Clauses.Manage', 'Templates.Manage', 'Obligations.Accept', 'Reports.View')],
   sales: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Submit', 'Attachments.Upload', 'Obligations.Complete', 'Reports.View')],
   procurement: [...viewer, ...P('Contracts.Create', 'Contracts.Edit', 'Contracts.Submit', 'Attachments.Upload', 'Obligations.Complete', 'Reports.View')],
-  finance: [...viewer, ...P('Obligations.Manage', 'Obligations.Accept', 'Contracts.Export', 'Reports.View')],
+  finance: [...viewer, ...P('Obligations.Manage', 'Obligations.Accept', 'Contracts.Export', 'Reports.View', 'Schedule.RequestChange')],
   admin: allPerms.map((p) => p.code),
 }
 

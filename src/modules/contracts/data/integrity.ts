@@ -198,6 +198,20 @@ export function checkFinance(db: DB): string[] {
     if (!pay.has(b.paymentItemId)) errs.push(`billing ${b.id}: unknown payment item`)
     if (b.ledgerDocId && !db.mockDocs.some((d) => d.id === b.ledgerDocId)) errs.push(`billing ${b.id}: unknown ledger document`)
   })
+  // plan doc 16: schedule changes
+  db.paymentItems.forEach((p) => {
+    if (p.splitFromId && pay.get(p.splitFromId)?.contractId !== p.contractId) errs.push(`payment ${p.id}: bad split source`)
+    if ((p.rescheduleCount ?? 0) > 0 && !p.originalDueDate) errs.push(`payment ${p.id}: deferred without original date`)
+    if (p.status === 'Planned' && cs.get(p.contractId)?.status === 'Terminated') errs.push(`payment ${p.id}: planned after termination`)
+  })
+  db.scheduleChanges.forEach((x) => {
+    if (!cs.has(x.contractId)) errs.push(`schedule change ${x.id}: unknown contract`)
+    if (x.itemIds.some((id) => pay.get(id)?.contractId !== x.contractId)) errs.push(`schedule change ${x.id}: item of another contract`)
+    if (x.status === 'Approved' && (!x.decidedBy || x.decidedBy === x.requestedBy)) errs.push(`schedule change ${x.id}: approved by requester`)
+    if (x.status === 'Pending' && x.itemIds.some((id) => pay.get(id)?.status !== 'Planned')) errs.push(`schedule change ${x.id}: pending on a billed item`)
+  })
+  const pend = db.scheduleChanges.filter((x) => x.status === 'Pending').flatMap((x) => x.itemIds)
+  if (new Set(pend).size !== pend.length) errs.push('schedule changes: two open requests on one item')
   db.guarantees.forEach((g) => { if (!cs.has(g.contractId)) errs.push(`guarantee ${g.id}: unknown contract`) })
   db.contracts.forEach((c) => {
     const items = db.paymentItems.filter((p) => p.contractId === c.id && p.status !== 'Cancelled')

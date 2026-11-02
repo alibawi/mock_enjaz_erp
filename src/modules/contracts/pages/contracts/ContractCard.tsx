@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from '../../router'
+import { Link, useParams, useSearchParams } from '../../router'
 import { ConfidentialityBadge, ContractActionBar, ContractStatusBadge } from '../../components/contract'
 import { PageHeader } from '../../components/Layout'
 import { Async, EmptyBlock } from '../../components/states'
@@ -29,7 +29,8 @@ type Tab = 'general' | 'parties' | 'lines' | 'terms' | 'attachments' | 'signatur
 export default function ContractCard() {
   const { id } = useParams()
   const { db } = useStore()
-  const [tab, setTab] = useState<Tab>('general')
+  const [sp] = useSearchParams()
+  const [tab, setTab] = useState<Tab>((sp.get('tab') as Tab | null) ?? 'general')
   const api = useApi(() => db.contracts.find((c) => c.id === id) ?? null, [id])
 
   return (

@@ -16,6 +16,7 @@ import Renewals from './pages/amendments/Renewals'
 import { VersionCompare } from './pages/amendments/Tabs'
 import ObligationsBoard from './pages/finance/Board'
 import Payments from './pages/finance/Payments'
+import ScheduleChangesPage from './pages/finance/ScheduleChanges'
 import Clauses from './pages/templates/Clauses'
 import Print from './pages/templates/Print'
 import TemplateEditor from './pages/templates/TemplateEditor'
@@ -67,6 +68,7 @@ export default function ContractsApp() {
         <Route path="/renewals" element={<Renewals />} />
         <Route path="/obligations" element={<ObligationsBoard />} />
         <Route path="/payments" element={<Payments />} />
+        <Route path="/installments" element={<ScheduleChangesPage />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/templates/:id" element={<TemplateEditor key={pathname} />} />
         <Route path="/clauses" element={<Clauses />} />

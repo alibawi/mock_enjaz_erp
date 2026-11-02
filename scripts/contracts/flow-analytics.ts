@@ -21,7 +21,7 @@ for (const u of db.users) {
     try { const res = r.build(db, {}); built++; if (res.rows.some((row) => res.cols.some((c) => row.cells[c.key] === undefined && false))) bad = r.code } catch (e) { bad = `${r.code} ${(e as Error).message}` }
   }
 }
-ok(`all ${reports.length} reports build for all ${db.users.length} users (${built})`, !bad && reports.length === 17, bad)
+ok(`all ${reports.length} reports build for all ${db.users.length} users (${built})`, !bad && reports.length === 18, bad)
 as(db, 'u-adm')
 
 // 2) data authority is applied before totals (BR-R-01)

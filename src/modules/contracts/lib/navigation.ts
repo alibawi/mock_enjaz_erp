@@ -1,5 +1,5 @@
 import {
-  AlarmClock, Building2, FileBarChart, History, SlidersHorizontal, BarChart3, BellRing, CalendarClock, ClipboardCheck, Coins, FileClock, FilePen, FileSignature, FileText, Files, Gauge, Handshake,
+  AlarmClock, Building2, FileBarChart, History, SlidersHorizontal, BarChart3, BellRing, CalendarClock, CalendarRange, ClipboardCheck, Coins, FileClock, FilePen, FileSignature, FileText, Files, Gauge, Handshake,
   Landmark, LayoutDashboard, ListChecks, Lock, Printer, Receipt, ScrollText, Settings2, ShieldCheck, Stethoscope, Tags, UserCog, Wrench, type LucideIcon,
 } from 'lucide-react'
 import { reports } from '../data/reports'
@@ -24,6 +24,7 @@ export const contractNav: NavItem[] = [
   { to: '/amendments', label: 'الملاحق', icon: FilePen, module: 'amendments' },
   { to: '/obligations', label: 'الالتزامات والمراحل', icon: ListChecks, section: 'الالتزامات والمالية', feature: 'Obligations', module: 'obligations-finance' },
   { to: '/payments', label: 'جدول الدفعات والفوترة', icon: Receipt, feature: 'Obligations', module: 'obligations-finance' },
+  { to: '/installments', label: 'الأقساط: تأجيل وتقسيم ودمج', icon: CalendarRange, feature: 'Obligations', module: 'obligations-finance' },
   { to: '/templates', label: 'قوالب العقود', icon: Files, section: 'القوالب والطباعة', feature: 'Templates', module: 'templates-print' },
   { to: '/clauses', label: 'مكتبة البنود', icon: ScrollText, feature: 'Templates', module: 'templates-print' },
   { to: '/service', label: 'عقود الخدمة', icon: Wrench, section: 'الخدمة', feature: 'Service', module: 'service' },

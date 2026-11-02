@@ -16,7 +16,8 @@
     "check:contracts:service": "esbuild scripts/contracts/flow-service.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-service.mjs --log-level=warning && node node_modules/.cache/contracts-flow-service.mjs",
     "check:contracts:settings": "esbuild scripts/contracts/flow-settings.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-settings.mjs --log-level=warning && node node_modules/.cache/contracts-flow-settings.mjs",
     "check:contracts:analytics": "esbuild scripts/contracts/flow-analytics.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-analytics.mjs --log-level=warning && node node_modules/.cache/contracts-flow-analytics.mjs",
-    "check": "npm run check:assets && npm run check:contracts"
+    "check": "npm run check:assets && npm run check:contracts",
+    "check:contracts:installments": "esbuild scripts/contracts/flow-installments.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/contracts-flow-installments.mjs --log-level=warning && node node_modules/.cache/contracts-flow-installments.mjs"
   },
   "dependencies": {
     "lucide-react": "0.460.0",

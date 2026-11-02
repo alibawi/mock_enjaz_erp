@@ -1,5 +1,6 @@
 // Module 5 seed: obligations, recurrence occurrences, payment schedules (some already billed through the real billing engine), guarantees.
 import { cancelOnTermination, generateOccurrences } from '../obligations'
+import { changeLines, decideChange, previewFromTerm, requestChange } from '../installments'
 import { createBilling, recordPayment } from '../payments'
 import type { BillingDocType, DB, Obligation, ObligationKind, PaymentItem, PaymentKind, PenaltyType, Recurrence } from '../types'
 
@@ -89,6 +90,7 @@ export function financeSeed(db: DB) {
     rec.date = it.dueDate
     if (paid !== 'unknown') recordPayment(db, id, paid, it.dueDate)
   })
+  installmentsSeed(db)
   db.userId = admin
   db.guarantees = [
     { id: 'gar-1', contractId: 'c-25', type: 'Performance', amount: 78_000_000, currency: 'IQD', issuer: 'مصرف الرافدين — فرع الكرادة', expiryDate: '2026-11-20', status: 'Active' },
@@ -97,4 +99,32 @@ export function financeSeed(db: DB) {
     { id: 'gar-4', contractId: 'c-09', type: 'Performance', amount: 99_300_000, currency: 'IQD', issuer: 'مصرف الرشيد', expiryDate: '2026-12-31', status: 'Active' },
     { id: 'gar-5', contractId: 'c-04', type: 'Retention', amount: 41_150_000, currency: 'IQD', issuer: 'مصرف بغداد', expiryDate: '2027-04-30', status: 'Active' },
   ]
+}
+
+/** Plan doc 16: schedules generated from installment payment terms, one approved deferral, one pending split, one partial payment. */
+function installmentsSeed(db: DB) {
+  const gen = (contractId: string, termId: string, base: string) => {
+    const c = db.contracts.find((x) => x.id === contractId)!
+    const items = previewFromTerm(db, c, termId, base).map((p) => ({ ...p, id: `pay-${contractId.slice(2)}-${p.itemNo}` }))
+    db.paymentItems.push(...items)
+  }
+  const bill = (id: string, paid?: number) => {
+    const it = db.paymentItems.find((p) => p.id === id)!
+    const e = createBilling(db, id)
+    if (e) throw new Error(`installments seed ${id}: ${e}`)
+    db.billingLog.find((b) => b.paymentItemId === id)!.date = it.dueDate
+    if (paid !== undefined) recordPayment(db, id, paid, it.dueDate)
+  }
+  const as = (u: string, f: () => string | null) => { const p = db.userId; db.userId = u; const e = f(); db.userId = p; if (e) throw new Error(`installments seed: ${e}`) }
+
+  // c-24 legal advice: four quarterly installments; the third was deferred once with approval
+  gen('c-24', 'pt-q4', '2026-01-01')
+  bill('pay-24-1', 12_000_000); bill('pay-24-2', 12_000_000)
+  as('u-fin', () => requestChange(db, { contractId: 'c-24', kind: 'Defer', itemIds: ['pay-24-3'], lines: changeLines(db, 'Defer', ['pay-24-3'], [{ dueDate: '2026-11-20', amount: 0 }]), reason: 'طلب المكتب تأجيل القسط لحين إنجاز المذكرة السنوية' }))
+  as('u-mgr', () => decideChange(db, db.scheduleChanges[db.scheduleChanges.length - 1].id, true, 'موافق — مرة واحدة'))
+
+  // c-18 equipment warranty (USD): 20 % advance + four installments; one partly paid, one overdue under a pending split
+  gen('c-18', 'pt-a20', '2026-05-01')
+  bill('pay-18-1', 9000); bill('pay-18-2', 5000)
+  as('u-fin', () => requestChange(db, { contractId: 'c-18', kind: 'Split', itemIds: ['pay-18-3'], lines: changeLines(db, 'Split', ['pay-18-3'], [{ dueDate: '2026-11-15', amount: 4500 }, { dueDate: '2026-12-15', amount: 4500 }]), reason: 'العميل طلب تقسيم القسط المتأخر على دفعتين' }))
 }

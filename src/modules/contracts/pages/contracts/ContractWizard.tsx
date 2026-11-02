@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Plus, Trash2, Wand2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from '../../router'
 import { AttachmentList, AttachmentUploader } from '../../components/attachments'
@@ -12,11 +12,14 @@ import { confLabel, directionLabel, profileLabel, renewalLabel } from '../../dat
 import { fmtDate, money, nowStamp, uid } from '../../data/format'
 import { copyTerms, selectableTemplates, templateDefaultsFor } from '../../data/templates'
 import { canSee, nextNumber, partnerName, perform, validateSubmit } from '../../data/lifecycle'
+import { hasInstallments, previewFromTerm } from '../../data/installments'
+import { billingFor, itemsOf, payKindLabel } from '../../data/payments'
 import { addAudit, useStore } from '../../data/store'
-import type { Confidentiality, Contract, ContractAttachmentRow, ContractLine, CurrencyCode, Direction, RenewalPolicy } from '../../data/types'
+import type { Confidentiality, Contract, ContractAttachmentRow, ContractLine, CurrencyCode, Direction, PaymentItem, PaymentKind, RenewalPolicy } from '../../data/types'
 
 const round = (n: number, cur: CurrencyCode) => (cur === 'IQD' ? Math.round(n) : Math.round(n * 100) / 100)
-const steps = ['النوع والاتجاه', 'الأطراف والتواريخ والقيمة', 'البنود', 'التجديد والتنبيهات', 'المرفقات', 'المراجعة والحفظ']
+const steps = ['النوع والاتجاه', 'الأطراف والتواريخ والقيمة', 'البنود', 'الأقساط', 'التجديد والتنبيهات', 'المرفقات', 'المراجعة والحفظ']
+const LAST = steps.length - 1
 
 const blank = (userId: string, orgId: string): Contract => ({
   id: '', number: '', title: '', typeId: '', profile: 'General', direction: 'Outgoing', status: 'Draft', versionNo: 0, ownerUserId: userId, organizationId: orgId,
@@ -36,6 +39,9 @@ export default function ContractWizard() {
   const [lines, setLines] = useState<ContractLine[]>(() => structuredClone(db.lines.filter((l) => l.contractId === existing?.id)))
   const [pending, setPending] = useState<ContractAttachmentRow[]>([])
   const [errs, setErrs] = useState<string[]>([])
+  // plan doc 16: installments are prepared in the wizard and saved with the draft
+  const [pays, setPays] = useState<PaymentItem[]>(() => structuredClone(existing ? itemsOf(db, existing.id) : []))
+  const [baseDate, setBaseDate] = useState('')
 
   const type = db.contractTypes.find((t) => t.id === f.typeId)
   const set = <K extends keyof Contract>(k: K, v: Contract[K]) => setF((x) => ({ ...x, [k]: v }))
@@ -59,6 +65,20 @@ export default function ContractWizard() {
   }
 
   const total = useMemo(() => lines.reduce((s, l) => s + (l.commitmentType === 'Quantity' ? (l.agreedQuantity ?? 0) * l.unitPrice * (1 - l.discountPercent / 100) : l.agreedValue ?? 0), 0), [lines])
+  const effValue = f.contractValue ?? (f.profile === 'Agreement' && lines.length ? Math.round(total) : undefined)
+  const schedEditable = !locked && !pays.some((p) => p.status !== 'Planned')
+  const paySum = pays.filter((p) => p.status !== 'Cancelled').reduce((s, p) => s + p.amount, 0)
+  const payGap = !!effValue && pays.length > 0 && Math.abs(paySum - effValue) > (f.currency === 'IQD' ? 0.5 : 0.005)
+  const generate = (termId = f.paymentTermId) => {
+    if (!termId || !effValue) return
+    setPays(previewFromTerm(db, { ...f, id: existing?.id ?? '__new', contractValue: effValue }, termId, baseDate || f.startDate))
+  }
+  const patchPay = (i: number, p: Partial<PaymentItem>) => setPays((x) => x.map((y, k) => (k === i ? { ...y, ...p } : y)))
+  const goTo = (s: number) => {
+    // entering the installments step with an empty schedule generates it from the chosen payment term
+    if (s === 3 && !pays.length && schedEditable) generate()
+    setStep(s)
+  }
 
   // assembled contract for validation (lines supplied through a temporary draft DB view)
   const problems = (): string[] => {
@@ -71,7 +91,7 @@ export default function ContractWizard() {
 
   const persist = (submit: boolean) => {
     if (!f.typeId || !f.title.trim()) { setErrs(['اختر النوع واكتب العنوان على الأقل']); setStep(0); return }
-    if (submit) { const p = problems(); if (p.length) { setErrs(p); setStep(5); return } }
+    if (submit) { const p = problems(); if (p.length) { setErrs(p); setStep(LAST); return } }
     let savedId = existing?.id ?? ''
     let failure = ''
     const ok = run((d) => {
@@ -94,6 +114,11 @@ export default function ContractWizard() {
         d.lines = [...d.lines.filter((l) => l.contractId !== cid), ...lines.map((l, k) => ({ ...l, contractId: cid, lineNum: k + 1, id: `${cid}-l${k + 1}` }))]
         const c = d.contracts.find((x) => x.id === cid)!
         if (c.profile === 'Agreement' && lines.length && !f.contractValue) c.contractValue = Math.round(total)
+        if (schedEditable) {
+          const before = d.paymentItems.filter((p) => p.contractId === cid).length
+          d.paymentItems = [...d.paymentItems.filter((p) => p.contractId !== cid), ...pays.map((p, k) => ({ ...p, contractId: cid, itemNo: k + 1, currency: f.currency }))]
+          if (pays.length || before) addAudit(d, 'contract', cid, 'payment:schedule', `${pays.length} قسط من المعالج`)
+        }
         const primary = d.parties.find((p) => p.contractId === cid && p.isPrimary)
         if (primary && existing) {
           const partner = d.partners.find((p) => p.id === f.counterpartyId)
@@ -121,7 +146,7 @@ export default function ContractWizard() {
       if (f.endDate && f.endDate < f.startDate) e.push('تاريخ النهاية يجب ألا يسبق البداية')
     }
     setErrs(e)
-    if (!e.length) setStep((s) => Math.min(5, s + 1))
+    if (!e.length) goTo(Math.min(LAST, step + 1))
   }
 
   const addLine = () => setLines((l) => [...l, { id: uid('ln'), contractId: '', lineNum: l.length + 1, description: '', commitmentType: 'Quantity', agreedQuantity: 1, unitPrice: 0, discountPercent: 0, priceFixed: true, enforceMax: false, status: 'Open', notes: '' }])
@@ -134,7 +159,7 @@ export default function ContractWizard() {
 
       <div className="mb-4 flex flex-wrap gap-1.5">
         {steps.map((s, i) => (
-          <button key={s} type="button" onClick={() => setStep(i)} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${i === step ? 'border-navy bg-navy text-white' : i < step ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-line bg-white text-gray-500'}`}>
+          <button key={s} type="button" onClick={() => goTo(i)} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${i === step ? 'border-navy bg-navy text-white' : i < step ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-line bg-white text-gray-500'}`}>
             {i < step ? <Check className="h-3 w-3" /> : <span className="font-semibold">{i + 1}</span>}{s}
           </button>
         ))}
@@ -222,6 +247,46 @@ export default function ContractWizard() {
       )}
 
       {step === 3 && (
+        <Card title="الأقساط" actions={schedEditable && <div className="flex flex-wrap gap-1">
+          <button type="button" className="btn" disabled={!f.paymentTermId || !effValue} title={!effValue ? 'أدخل قيمة العقد أولاً' : !f.paymentTermId ? 'اختر شرط الدفع' : undefined} onClick={() => generate()}><Wand2 className="h-4 w-4" />{pays.length ? 'إعادة التوليد من شرط الدفع' : 'توليد من شرط الدفع'}</button>
+          <button type="button" className="btn" onClick={() => setPays((x) => [...x, { id: uid('pay'), contractId: '', itemNo: x.length + 1, kind: 'Milestone', dueDate: '', amount: 0, currency: f.currency, status: 'Planned', billingDocType: billingFor(f)[0], notes: '' }])}><Plus className="h-4 w-4" />قسط يدوي</button>
+        </div>}>
+          {!schedEditable ? (
+            <div className="space-y-2">
+              <div className="rounded bg-sky-50 px-3 py-2 text-xs text-sky-800">العقد خارج المسودة أو فيه قسط مفوتر: الأقساط تُدار من تبويب «المالية» في بطاقة العقد (تأجيل/تقسيم/دمج باعتماد).</div>
+              <ul className="text-sm">{pays.map((p) => <li key={p.id}>القسط {p.itemNo} — {fmtDate(p.dueDate)} — {money(p.amount, p.currency)}</li>)}</ul>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <FormGrid>
+                <Field label="شرط الدفع" span={2} hint="نفس حقل الخطوة السابقة؛ الشروط ذات الأقساط من موديول المالية">
+                  <SearchableSelect value={f.paymentTermId ?? ''} onChange={(v) => { set('paymentTermId', v || undefined); if (v && (!pays.length || pays.every((p) => p.sourceTermId))) generate(v) }} options={db.paymentTerms.map((p) => ({ value: p.id, label: p.name, hint: hasInstallments(p) ? `${p.installments!.length} أقساط` : `${p.days} يوماً` }))} />
+                </Field>
+                <Field label="تاريخ الأساس" hint="الأصل: تاريخ بداية العقد"><DateInput value={baseDate || f.startDate} onChange={setBaseDate} /></Field>
+                <Field label="قيمة العقد"><div className="inp flex items-center bg-gray-50">{effValue ? money(effValue, f.currency) : '—'}</div></Field>
+              </FormGrid>
+              {pays.length === 0 ? <EmptyBlock title="لا أقساط بعد" hint={effValue ? 'اختر شرط دفع لتوليد الأقساط، أو أضف قسطاً يدوياً. يمكن ترك الجدول فارغاً وإضافته لاحقاً من تبويب المالية.' : 'أدخل قيمة العقد في الخطوة الثانية ليُولَّد الجدول من شرط الدفع.'} /> : (
+                <div className="space-y-2">
+                  {pays.map((p, i) => (
+                    <div key={p.id} className="grid grid-cols-12 items-end gap-2 rounded-md border border-line p-2">
+                      <div className="col-span-1 pb-2 text-center text-sm font-semibold">{i + 1}</div>
+                      <div className="col-span-3"><div className="mb-1 text-[11px] text-gray-500">النوع</div><Select value={p.kind} onChange={(v: PaymentKind) => patchPay(i, { kind: v })} options={(Object.keys(payKindLabel) as PaymentKind[]).map((k) => ({ value: k, label: payKindLabel[k] }))} /></div>
+                      <div className="col-span-3"><div className="mb-1 text-[11px] text-gray-500">الاستحقاق</div><DateInput value={p.dueDate} onChange={(v) => patchPay(i, { dueDate: v })} /></div>
+                      <div className="col-span-2"><div className="mb-1 text-[11px] text-gray-500">النسبة %</div><NumInput value={p.percent ?? 0} onChange={(n) => patchPay(i, { percent: n || undefined, amount: effValue && n ? round((effValue * n) / 100, f.currency) : p.amount })} /></div>
+                      <div className="col-span-2"><div className="mb-1 text-[11px] text-gray-500">المبلغ ({f.currency})</div><NumInput value={p.amount} onChange={(n) => patchPay(i, { amount: n, percent: effValue ? Math.round((n / effValue) * 10000) / 100 : p.percent })} /></div>
+                      <div className="col-span-1 text-end"><button type="button" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title="حذف القسط" onClick={() => setPays((x) => x.filter((_, k) => k !== i))}><Trash2 className="h-4 w-4" /></button></div>
+                    </div>))}
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span>المجموع: <b>{money(paySum, f.currency)}</b>{effValue ? ` من ${money(effValue, f.currency)}` : ''}</span>
+                    {payGap ? <span className="text-xs text-amber-700">المجموع لا يساوي قيمة العقد — عدّل الأقساط أو أعد التوليد</span> : effValue ? <span className="text-xs text-emerald-700">المجموع يساوي قيمة العقد</span> : null}
+                  </div>
+                </div>)}
+              <p className="text-[11px] text-gray-400">المبلغ = القيمة × النسبة وفرق التقريب على القسط الأخير. يُعدَّل الجدول بحرية ما دام العقد مسودة؛ بعد ذلك بطلبات تأجيل/تقسيم/دمج يعتمدها مستخدم آخر.</p>
+            </div>)}
+        </Card>
+      )}
+
+      {step === 4 && (
         <Card title="التجديد والتنبيهات">
           <FormGrid>
             <Field label="سياسة التجديد"><Select value={f.renewalPolicy} onChange={(v: RenewalPolicy) => set('renewalPolicy', v)} disabled={locked} options={(Object.keys(renewalLabel) as RenewalPolicy[]).map((k) => ({ value: k, label: renewalLabel[k] }))} /></Field>
@@ -235,30 +300,31 @@ export default function ContractWizard() {
         </Card>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <Card title="المرفقات (محاكاة)" actions={<AttachmentUploader onPick={(a) => setPending((p) => [...p, { id: uid('att'), ownerType: 'contract', ownerId: '', subType: 'Draft', ...a, uploadedBy: user.name, uploadedAt: nowStamp(), version: 1 }])} />}>
           <AttachmentList items={[...db.attachments.filter((a) => a.ownerId === existing?.id), ...pending]} canDelete onDelete={(a) => setPending((p) => p.filter((x) => x.id !== a.id))} />
         </Card>
       )}
 
-      {step === 5 && (
+      {step === 6 && (
         <Card title="المراجعة">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-3">
             {[['العنوان', f.title], ['النوع', type?.name], ['الاتجاه', directionLabel[f.direction]], ['الطرف الآخر', partnerName(db, f)], ['القيمة', f.contractValue ? money(f.contractValue, f.currency) : '—'],
-              ['المدة', `${fmtDate(f.startDate)} ← ${f.endDate ? fmtDate(f.endDate) : 'مفتوح'}`], ['التجديد', renewalLabel[f.renewalPolicy]], ['البنود', String(lines.length)], ['المرفقات الجديدة', String(pending.length)]].map(([k, v]) => (
+              ['المدة', `${fmtDate(f.startDate)} ← ${f.endDate ? fmtDate(f.endDate) : 'مفتوح'}`], ['التجديد', renewalLabel[f.renewalPolicy]], ['البنود', String(lines.length)], ['الأقساط', pays.length ? `${pays.length} — ${money(paySum, f.currency)}` : 'لا أقساط'], ['المرفقات الجديدة', String(pending.length)]].map(([k, v]) => (
               <div key={k as string}><dt className="text-[11px] text-gray-500">{k}</dt><dd className="font-medium">{v}</dd></div>))}
           </dl>
+          {payGap && <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">مجموع الأقساط {money(paySum, f.currency)} لا يساوي قيمة العقد {money(effValue!, f.currency)} — راجع خطوة «الأقساط».</div>}
           {(() => { const p = problems(); return p.length ? <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800"><div className="mb-1 font-semibold">قبل الإرسال للاعتماد يجب إصلاح:</div><ul className="list-disc ps-5">{p.map((x) => <li key={x}>{x}</li>)}</ul></div> : <div className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">البيانات مكتملة وجاهزة للإرسال للاعتماد.</div> })()}
         </Card>
       )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <button type="button" className="btn" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}><ChevronRight className="h-4 w-4" />السابق</button>
+        <button type="button" className="btn" disabled={step === 0} onClick={() => goTo(Math.max(0, step - 1))}><ChevronRight className="h-4 w-4" />السابق</button>
         <div className="flex gap-2">
           <button type="button" className="btn" onClick={() => nav(existing ? `/contracts/${existing.id}` : '/contracts')}>إلغاء</button>
           <button type="button" className="btn" onClick={() => persist(false)}>{existing ? 'حفظ التعديلات' : 'حفظ كمسودة'}</button>
-          {step === 5 && !locked && can('Contracts.Submit') && <button type="button" className="btn btn-primary" onClick={() => persist(true)}>حفظ وإرسال للاعتماد</button>}
-          {step < 5 && <button type="button" className="btn btn-primary" onClick={next}>التالي<ChevronLeft className="h-4 w-4" /></button>}
+          {step === LAST && !locked && can('Contracts.Submit') && <button type="button" className="btn btn-primary" onClick={() => persist(true)}>حفظ وإرسال للاعتماد</button>}
+          {step < LAST && <button type="button" className="btn btn-primary" onClick={next}>التالي<ChevronLeft className="h-4 w-4" /></button>}
         </div>
       </div>
     </div>

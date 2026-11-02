@@ -12,7 +12,7 @@ import type { AppUser, DB, Perm, RoleId } from './types'
 
 const KEY = 'enki-contracts-mock'
 /** Bump whenever the data model or seed changes — stored data with another version is discarded and reseeded. */
-export const DATA_VERSION = 11
+export const DATA_VERSION = 12
 
 type Toast = { msg: string; tone: 'ok' | 'err' }
 

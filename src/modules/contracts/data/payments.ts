@@ -8,16 +8,17 @@ import { penaltyOf } from './obligations'
 import type { BillingDocType, Contract, CurrencyCode, DB, DocType, PaymentItem, PaymentKind, PaymentStatus } from './types'
 
 export const payKindLabel: Record<PaymentKind, string> = { Advance: 'دفعة مقدمة', Milestone: 'دفعة مرحلة', Periodic: 'دفعة دورية', Retention: 'محتجز ضمان', Final: 'دفعة ختامية' }
-export const payStatusLabel: Record<PaymentStatus, string> = { Planned: 'مخططة', Due: 'مستحقة', Invoiced: 'فُوتِرت', Paid: 'مسدّدة', Cancelled: 'ملغاة' }
-export const payStatusTone: Record<PaymentStatus, 'gray' | 'amber' | 'blue' | 'green' | 'red'> = { Planned: 'gray', Due: 'amber', Invoiced: 'blue', Paid: 'green', Cancelled: 'gray' }
+export const payStatusLabel: Record<PaymentStatus, string> = { Planned: 'مخططة', Due: 'مستحقة', Invoiced: 'فُوتِرت', PartiallyPaid: 'مدفوعة جزئياً', Paid: 'مسدّدة', Cancelled: 'ملغاة' }
+export const payStatusTone: Record<PaymentStatus, 'gray' | 'amber' | 'blue' | 'green' | 'red'> = { Planned: 'gray', Due: 'amber', Invoiced: 'blue', PartiallyPaid: 'blue', Paid: 'green', Cancelled: 'gray' }
 export const billingLabel: Record<BillingDocType, string> = {
   SaleOrder: 'أمر بيع', SaleInvoice: 'فاتورة بيع', SalesTemplate: 'قالب مبيعات متكرر', PurchaseOrder: 'أمر شراء', PurchaseBill: 'فاتورة شراء', PurchaseTemplate: 'قالب مشتريات متكرر',
 }
 export const billingFor = (c: Contract): BillingDocType[] => (c.direction === 'Incoming' ? ['PurchaseBill', 'PurchaseOrder', 'PurchaseTemplate'] : ['SaleInvoice', 'SaleOrder', 'SalesTemplate'])
 const ledgerType: Partial<Record<BillingDocType, DocType>> = { SaleOrder: 'SOR', SaleInvoice: 'INV', PurchaseOrder: 'POR', PurchaseBill: 'PCH' }
 
-/** Planned items whose date arrived are Due (derived from the demo date). */
-export const effItemStatus = (it: PaymentItem, on = today()): PaymentStatus => (it.status === 'Planned' && it.dueDate <= on ? 'Due' : it.status)
+/** Planned items whose date arrived are Due; invoiced items with part of the money received are PartiallyPaid (both derived). */
+export const effItemStatus = (it: PaymentItem, on = today()): PaymentStatus =>
+  it.status === 'Planned' && it.dueDate <= on ? 'Due' : it.status === 'Invoiced' && (it.paidAmount ?? 0) > 0 ? 'PartiallyPaid' : it.status
 export const itemsOf = (db: DB, contractId: string) => db.paymentItems.filter((i) => i.contractId === contractId).sort((a, b) => a.itemNo - b.itemNo)
 const live = (it: PaymentItem) => it.status !== 'Cancelled'
 
@@ -52,6 +53,9 @@ export function saveItem(d: DB, it: PaymentItem): string | null {
   if (!c) return 'العقد غير موجود'
   const old = d.paymentItems.find((x) => x.id === it.id)
   if (old && old.status !== 'Planned') return 'البند مجمّد بعد الفوترة'
+  // plan doc 16 BR-PI-04: after Draft, dates and amounts change only through an approved schedule change
+  if (c.status !== 'Draft' && old && (old.dueDate !== it.dueDate || old.amount !== it.amount)) return 'بعد خروج العقد من المسودة يُغيَّر التاريخ أو المبلغ بطلب تأجيل/تقسيم/دمج، والقيمة بملحق'
+  if (c.status !== 'Draft' && !old && c.contractValue && scheduleCheck(d, c, [...itemsOf(d, c.id), it]).amount > c.contractValue + 0.5) return 'إضافة القسط تتجاوز قيمة العقد — زيادة القيمة بملحق'
   const errs = validateItem(d, c, it).filter((x) => !x.endsWith('راجع الجدول'))
   if (errs.length) return errs.join(' — ')
   if (old) d.paymentItems = d.paymentItems.map((x) => (x.id === it.id ? it : x)); else d.paymentItems.push(it)
@@ -61,6 +65,7 @@ export function deleteItem(d: DB, id: string): string | null {
   const it = d.paymentItems.find((x) => x.id === id)
   if (!it) return 'البند غير موجود'
   if (it.status !== 'Planned') return 'البند مجمّد بعد الفوترة'
+  if (d.contracts.find((c) => c.id === it.contractId)?.status !== 'Draft') return 'لا يُحذف قسط بعد خروج العقد من المسودة — يُلغى بملحق'
   d.paymentItems = d.paymentItems.filter((x) => x.id !== id)
   return null
 }
@@ -71,6 +76,7 @@ export function billingBlocker(d: DB, it: PaymentItem): string | undefined {
   if (!featureOn(d, 'RecurringBilling')) return 'الفوترة التلقائية معطّلة من إعدادات النظام'
   if (effItemStatus(it) !== 'Due') return it.status === 'Planned' ? `يستحق في ${it.dueDate}` : 'تمت فوترته'
   if (!['Active', 'OnHold'].includes(c.status)) return 'العقد غير ساري'
+  if (d.scheduleChanges.some((x) => x.status === 'Pending' && x.itemIds.includes(it.id))) return 'القسط في طلب تغيير جدول بانتظار الاعتماد'
   if (!it.billingDocType) return 'حدّد نوع مستند الفوترة'
   return undefined
 }

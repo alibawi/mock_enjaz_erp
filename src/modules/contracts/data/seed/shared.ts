@@ -43,6 +43,10 @@ export const paymentTerms: PaymentTerm[] = [
   { id: 'pt-30', code: 'NET30', name: 'صافي 30 يوماً', days: 30 },
   { id: 'pt-60', code: 'NET60', name: 'صافي 60 يوماً', days: 60 },
   { id: 'pt-90', code: 'NET90', name: 'صافي 90 يوماً', days: 90 },
+  // installment terms (Finance PaymentTerm with AllowInstallments)
+  { id: 'pt-i3', code: 'INST3', name: 'ثلاثة أقساط 30/60/90', days: 90, installments: [{ no: 1, percent: 34, days: 30 }, { no: 2, percent: 33, days: 60 }, { no: 3, percent: 33, days: 90 }] },
+  { id: 'pt-q4', code: 'INST4Q', name: 'أربعة أقساط ربع سنوية', days: 360, installments: [{ no: 1, percent: 25, days: 90, description: 'قسط الربع الأول' }, { no: 2, percent: 25, days: 180, description: 'قسط الربع الثاني' }, { no: 3, percent: 25, days: 270, description: 'قسط الربع الثالث' }, { no: 4, percent: 25, days: 360, description: 'قسط الربع الرابع' }] },
+  { id: 'pt-a20', code: 'ADV20+4', name: 'مقدمة 20% وأربعة أقساط كل 60 يوماً', days: 240, installments: [{ no: 1, percent: 20, days: 0, description: 'دفعة مقدمة' }, { no: 2, percent: 20, days: 60 }, { no: 3, percent: 20, days: 120 }, { no: 4, percent: 20, days: 180 }, { no: 5, percent: 20, days: 240 }] },
 ]
 
 const P = (id: string, code: string, name: string, kind: Partner['kind'], city: string, contact: string, phone: string, pt: string, currency: Partner['currency'] = 'IQD'): Partner => ({

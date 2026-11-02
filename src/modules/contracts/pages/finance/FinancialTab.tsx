@@ -1,4 +1,4 @@
-import { FileText, Pencil, Plus, ReceiptText, Trash2, Wallet } from 'lucide-react'
+import { CalendarClock, FileText, Merge, Pencil, Plus, ReceiptText, Split, Trash2, Wallet, Wand2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from '../../router'
 import { DataTable, type Column } from '../../components/DataTable'
@@ -10,7 +10,9 @@ import {
   billingBlocker, billingFor, billingLabel, createBilling, deleteItem, effItemStatus, financialSummary, guaranteeDays, itemsOf, nextItemNo, payKindLabel, payStatusLabel, payStatusTone,
   recordPayment, saveItem, scheduleCheck, toIQD, validateItem,
 } from '../../data/payments'
+import { changeKindLabel, directEdit, generateBlocker, openChangeFor, overdueDays } from '../../data/installments'
 import { addAudit, useStore } from '../../data/store'
+import { ChangeDialog, ChangesCard, GenerateDialog, MergeDialog } from './ScheduleChanges'
 import type { BillingDocType, BillingRecord, Contract, Guarantee, PaymentItem, PaymentKind } from '../../data/types'
 
 const guaranteeType = { Performance: 'حسن تنفيذ', Advance: 'دفعة مقدمة', Retention: 'محتجز' } as const
@@ -52,6 +54,7 @@ export function FinancialTab({ c }: { c: Contract }) {
         <p className="border-t border-line px-4 py-2 text-[11px] text-gray-400">المفوتر من دفتر التنفيذ للاتفاقيات ومن سجل الفوترة لغيرها؛ المدفوع من تسوية Finance (محاكاة). لا قيود محاسبية.</p>
       </Card>
       <ScheduleCard c={c} />
+      <ChangesCard c={c} />
       <Card title="الضمانات" pad={false}>
         <DataTable rows={guarantees} compact emptyTitle="لا ضمانات" columns={[
           { key: 't', label: 'النوع', render: (g: Guarantee) => guaranteeType[g.type] }, { key: 'a', label: 'المبلغ', render: (g: Guarantee) => money(g.amount, g.currency) }, { key: 'i', label: 'الجهة المصدرة', render: (g: Guarantee) => g.issuer },
@@ -67,13 +70,27 @@ function ScheduleCard({ c }: { c: Contract }) {
   const { db, run, can } = useStore()
   const [dlg, setDlg] = useState<PaymentItem | 'new' | null>(null)
   const [pay, setPay] = useState<PaymentItem | null>(null)
+  const [gen, setGen] = useState(false)
+  const [chg, setChg] = useState<{ kind: 'Defer' | 'Split'; it: PaymentItem } | 'merge' | null>(null)
   const items = itemsOf(db, c.id)
   const chk = scheduleCheck(db, c, items)
   const canSchedule = can('Obligations.Manage')
   const canBill = can('Obligations.Manage') || can('Contracts.Export')
+  const draft = directEdit(c)
+  const canRequest = !draft && can('Schedule.RequestChange') && ['Active', 'OnHold', 'Approved', 'PendingSignature'].includes(c.status)
+  const genBlock = generateBlocker(db, c)
   const cols: Column<PaymentItem>[] = [
-    { key: 'n', label: '#', render: (i) => i.itemNo }, { key: 'k', label: 'النوع', render: (i) => payKindLabel[i.kind] },
-    { key: 'd', label: 'الاستحقاق', render: (i) => fmtDate(i.dueDate) }, { key: 'p', label: '%', num: true, render: (i) => (i.percent !== undefined ? `${i.percent}%` : '—') },
+    { key: 'n', label: '#', render: (i) => <div>{i.itemNo}{i.splitFromId && <div className="text-[10px] text-gray-400">من تقسيم</div>}</div> }, { key: 'k', label: 'النوع', render: (i) => payKindLabel[i.kind] },
+    {
+      key: 'd', label: 'الاستحقاق', render: (i) => {
+        const od = overdueDays(i), open = openChangeFor(db, i.id)
+        return <div>{fmtDate(i.dueDate)}
+          {i.originalDueDate && <div className="text-[10px] text-gray-500">الأصل {fmtDate(i.originalDueDate)}{i.rescheduleCount ? ` · أُجّل ${i.rescheduleCount}` : ''}</div>}
+          {od > 0 && <div className="text-[10px] font-medium text-red-600">متأخر {od} يوم</div>}
+          {open && <div className="text-[10px] text-amber-700">في طلب {changeKindLabel[open.kind]} #{open.changeNo}</div>}</div>
+      },
+    },
+    { key: 'p', label: '%', num: true, render: (i) => (i.percent !== undefined ? `${i.percent}%` : '—') },
     { key: 'a', label: 'المبلغ', num: true, render: (i) => money(i.amount, i.currency) },
     { key: 'o', label: 'الارتباط', render: (i) => <span className="text-xs text-gray-500">{i.obligationId ? db.obligations.find((o) => o.id === i.obligationId)?.title : ''}{i.agreementLineNum ? ` · بند ${i.agreementLineNum}` : ''}</span> },
     { key: 'b', label: 'مستند الفوترة', render: (i) => (i.billingDocType ? billingLabel[i.billingDocType] : '—') },
@@ -83,19 +100,30 @@ function ScheduleCard({ c }: { c: Contract }) {
         <div className="flex flex-wrap gap-1">
           {i.status === 'Planned' && canBill && <button type="button" className="btn btn-primary" disabled={!!billingBlocker(db, i)} title={billingBlocker(db, i)} onClick={() => run((d) => createBilling(d, i.id), 'أُنشئ مستند الفوترة (محاكاة)')}><ReceiptText className="h-3.5 w-3.5" />إنشاء فوترة</button>}
           {i.status === 'Invoiced' && canBill && <button type="button" className="btn" onClick={() => setPay(i)}>تسجيل دفعة</button>}
-          {i.status === 'Planned' && canSchedule && <button type="button" className="rounded p-1 text-gray-400 hover:bg-gray-100" title="تعديل" onClick={() => setDlg(i)}><Pencil className="h-4 w-4" /></button>}
-          {i.status === 'Planned' && canSchedule && <button type="button" className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600" title="حذف" onClick={() => run((d) => { const e = deleteItem(d, i.id); if (!e) addAudit(d, 'contract', c.id, 'payment:delete', `دفعة ${i.itemNo}`); return e }, 'حُذف البند')}><Trash2 className="h-4 w-4" /></button>}
+          {i.status === 'Planned' && canRequest && !openChangeFor(db, i.id) && <>
+            <button type="button" className="btn" onClick={() => setChg({ kind: 'Defer', it: i })}><CalendarClock className="h-3.5 w-3.5" />تأجيل</button>
+            <button type="button" className="btn" onClick={() => setChg({ kind: 'Split', it: i })}><Split className="h-3.5 w-3.5" />تقسيم</button></>}
+          {i.status === 'Planned' && canSchedule && <button type="button" className="rounded p-1 text-gray-400 hover:bg-gray-100" title={draft ? 'تعديل' : 'تعديل الملاحظات ومستند الفوترة (التاريخ والمبلغ بطلب)'} onClick={() => setDlg(i)}><Pencil className="h-4 w-4" /></button>}
+          {i.status === 'Planned' && canSchedule && draft && <button type="button" className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600" title="حذف" onClick={() => run((d) => { const e = deleteItem(d, i.id); if (!e) addAudit(d, 'contract', c.id, 'payment:delete', `دفعة ${i.itemNo}`); return e }, 'حُذف البند')}><Trash2 className="h-4 w-4" /></button>}
         </div>) },
   ]
   return (
-    <Card title="جدول الدفعات" pad={false} actions={canSchedule && !['Cancelled', 'Closed'].includes(c.status) && <button type="button" className="btn btn-primary" onClick={() => setDlg('new')}><Plus className="h-4 w-4" />دفعة</button>}>
-      <DataTable rows={items} columns={cols} emptyTitle="لا دفعات مجدولة" emptyHint="أضف دفعات مقدمة ومراحل ودورية ومحتجزاً؛ تستحق بتاريخها فتُنشأ فواتيرها تلقائياً بنقرة." />
+    <Card title="جدول الدفعات والأقساط" pad={false} actions={<div className="flex flex-wrap gap-1">
+      {canSchedule && draft && <button type="button" className="btn" disabled={!!genBlock} title={genBlock} onClick={() => setGen(true)}><Wand2 className="h-4 w-4" />توليد من شرط الدفع</button>}
+      {canRequest && items.filter((i) => i.status === 'Planned' && !openChangeFor(db, i.id)).length >= 2 && <button type="button" className="btn" onClick={() => setChg('merge')}><Merge className="h-4 w-4" />دمج أقساط</button>}
+      {canSchedule && !['Cancelled', 'Closed', 'Terminated', 'Expired'].includes(c.status) && <button type="button" className="btn btn-primary" onClick={() => setDlg('new')}><Plus className="h-4 w-4" />دفعة</button>}
+    </div>}>
+      {!draft && <div className="border-b border-line bg-sky-50 px-4 py-1.5 text-[11px] text-sky-800">العقد خارج المسودة: تاريخ القسط ومبلغه يتغيران بطلب تأجيل أو تقسيم أو دمج يعتمده مستخدم آخر، وتغيير القيمة أو الإعفاء بملحق.</div>}
+      <DataTable rows={items} columns={cols} emptyTitle="لا دفعات مجدولة" emptyHint="ولّد الأقساط من شرط دفع في المالية، أو أضف دفعات مقدمة ومراحل ودورية ومحتجزاً يدوياً." />
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2 text-xs">
         <span>المجموع: <b>{money(chk.amount, c.currency)}</b> · النسب <b>{chk.percent.toFixed(1)}%</b> · قيمة العقد {money(c.contractValue ?? 0, c.currency)}</span>
         {chk.warnings.length ? <span className="text-red-600">{chk.warnings.join(' — ')}</span> : <span className="text-emerald-700">الجدول ضمن الحدود</span>}
       </div>
       {dlg && <ItemDialog c={c} it={dlg === 'new' ? undefined : dlg} onClose={() => setDlg(null)} />}
       {pay && <PayDialog it={pay} onClose={() => setPay(null)} />}
+      {gen && <GenerateDialog c={c} onClose={() => setGen(false)} />}
+      {chg === 'merge' && <MergeDialog c={c} onClose={() => setChg(null)} />}
+      {chg && chg !== 'merge' && <ChangeDialog c={c} kind={chg.kind} items={[chg.it]} onClose={() => setChg(null)} />}
     </Card>
   )
 }
@@ -107,6 +135,7 @@ function ItemDialog({ c, it, onClose }: { c: Contract; it?: PaymentItem; onClose
   const [err, setErr] = useState('')
   const set = <K extends keyof PaymentItem>(k: K, v: PaymentItem[K]) => setF((x) => ({ ...x, [k]: v }))
   const warn = validateItem(db, c, f).filter((e) => e.endsWith('راجع الجدول'))
+  const locked = !!it && !directEdit(c)
   const save = () => {
     let failure = ''
     const ok = run((d) => { const e = saveItem(d, f); if (e) failure = e; return e }, it ? 'حُدّث البند' : 'أُضيف البند')
@@ -118,9 +147,9 @@ function ItemDialog({ c, it, onClose }: { c: Contract; it?: PaymentItem; onClose
       <div className="space-y-3">
         <FormGrid>
           <Field label="النوع"><Select value={f.kind} onChange={(v: PaymentKind) => set('kind', v)} options={(Object.keys(payKindLabel) as PaymentKind[]).map((k) => ({ value: k, label: payKindLabel[k] }))} /></Field>
-          <Field label="تاريخ الاستحقاق" required><DateInput value={f.dueDate} onChange={(v) => set('dueDate', v)} /></Field>
-          <Field label={`المبلغ (${c.currency})`} required><NumInput value={f.amount} onChange={(n) => setF((x) => ({ ...x, amount: n, percent: c.contractValue ? Math.round((n / c.contractValue) * 1000) / 10 : x.percent }))} /></Field>
-          <Field label="النسبة %"><NumInput value={f.percent ?? 0} onChange={(n) => setF((x) => ({ ...x, percent: n || undefined, amount: c.contractValue && n ? Math.round((c.contractValue * n) / 100) : x.amount }))} /></Field>
+          <Field label="تاريخ الاستحقاق" required hint={locked ? 'يتغير بطلب تأجيل' : undefined}><DateInput value={f.dueDate} disabled={locked} onChange={(v) => set('dueDate', v)} /></Field>
+          <Field label={`المبلغ (${c.currency})`} required><NumInput value={f.amount} disabled={locked} onChange={(n) => setF((x) => ({ ...x, amount: n, percent: c.contractValue ? Math.round((n / c.contractValue) * 1000) / 10 : x.percent }))} /></Field>
+          <Field label="النسبة %"><NumInput value={f.percent ?? 0} disabled={locked} onChange={(n) => setF((x) => ({ ...x, percent: n || undefined, amount: c.contractValue && n ? Math.round((c.contractValue * n) / 100) : x.amount }))} /></Field>
           <Field label="مستند الفوترة"><Select value={f.billingDocType ?? ''} onChange={(v: BillingDocType) => set('billingDocType', v)} options={(['SaleInvoice', 'SaleOrder', 'SalesTemplate', 'PurchaseBill', 'PurchaseOrder', 'PurchaseTemplate'] as BillingDocType[]).filter((t) => billingFor(c).includes(t)).map((t) => ({ value: t, label: billingLabel[t] }))} /></Field>
           <Field label="التزام مرتبط" span={2}><Select value={f.obligationId ?? ''} placeholder="— بلا —" onChange={(v) => set('obligationId', v || undefined)} options={db.obligations.filter((o) => o.contractId === c.id).map((o) => ({ value: o.id, label: o.title }))} /></Field>
           {c.profile === 'Agreement' && <Field label="بند الاتفاقية (للقيد في الدفتر)"><Select value={String(f.agreementLineNum ?? '')} placeholder="— بلا —" onChange={(v) => set('agreementLineNum', v ? Number(v) : undefined)} options={db.lines.filter((l) => l.contractId === c.id).map((l) => ({ value: String(l.lineNum), label: `${l.lineNum}. ${l.description}` }))} /></Field>}

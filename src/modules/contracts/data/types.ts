@@ -9,7 +9,7 @@ export type Perm =
   | 'Attachments.View' | 'Attachments.Upload' | 'Attachments.Download' | 'Attachments.Delete'
   | 'Fulfillment.Recalculate' | 'ContractTypes.Manage' | 'Templates.Manage' | 'Clauses.Manage'
   | 'Obligations.Manage' | 'Obligations.Complete' | 'Obligations.Accept' | 'ApprovalDelegations.Manage'
-  | 'Reports.View' | 'Settings.Manage'
+  | 'Reports.View' | 'Settings.Manage' | 'Schedule.RequestChange' | 'Schedule.ApproveChange'
 
 export type CurrencyCode = 'IQD' | 'USD'
 /** BR-X-03: how much of the data a user may see. */
@@ -28,7 +28,8 @@ export interface ExchangeRate { code: CurrencyCode; date: string; rate: number }
 export interface Uom { id: string; code: string; name: string }
 export interface Category { id: string; code: string; name: string; parentId?: string }
 export interface Item { id: string; code: string; name: string; categoryId: string; uomId: string; basePrice: number; currency: CurrencyCode }
-export interface PaymentTerm { id: string; code: string; name: string; days: number }
+/** Finance payment term; `installments` mirrors PaymentTermInstallment (percent of total, days from the base date). */
+export interface PaymentTerm { id: string; code: string; name: string; days: number; installments?: { no: number; percent: number; days: number; description?: string }[] }
 export interface CostCenter { id: string; code: string; name: string }
 export interface Project { id: string; code: string; name: string }
 
@@ -40,6 +41,7 @@ export type SettingKey =
   | 'Agreements.OnFulfillmentFailure' | 'Currency.ConversionRateSource'
   | 'Reminder.Days' | 'Reminder.NoticeDays' | 'Renewal.GraceDays' | 'Approval.ReminderDays' | 'Approval.AllowCreatorApproval'
   | 'Feature.Obligations' | 'Feature.Templates' | 'Feature.Service' | 'Feature.ESignature' | 'Feature.RecurringBilling'
+  | 'Schedule.MaxDeferralsPerItem' | 'Schedule.AllowBeyondEndDate'
 export type SettingValue = string | number | boolean
 
 export interface Notice { id: string; at: string; text: string; tone: 'info' | 'warn' | 'danger'; seen: boolean }
@@ -213,13 +215,29 @@ export interface Obligation {
 }
 export interface ObligationOccurrence { id: string; obligationId: string; dueDate: string; status: 'Planned' | 'Completed' | 'Waived'; completedOn?: string }
 export type PaymentKind = 'Advance' | 'Milestone' | 'Periodic' | 'Retention' | 'Final'
-export type PaymentStatus = 'Planned' | 'Due' | 'Invoiced' | 'Paid' | 'Cancelled'
+/** `Due` and `PartiallyPaid` are derived for display; stored items are Planned/Invoiced/Paid/Cancelled. */
+export type PaymentStatus = 'Planned' | 'Due' | 'Invoiced' | 'PartiallyPaid' | 'Paid' | 'Cancelled'
 export type BillingDocType = 'PurchaseOrder' | 'PurchaseBill' | 'PurchaseTemplate' | 'SaleOrder' | 'SaleInvoice' | 'SalesTemplate'
 export interface PaymentItem {
   id: string; contractId: string; itemNo: number; kind: PaymentKind; dueDate: string; percent?: number; amount: number; currency: CurrencyCode
   obligationId?: string; agreementLineNum?: number; status: PaymentStatus; billingDocType?: BillingDocType; billingId?: string
   /** Undefined while the settlement from Finance is unknown. */
   paidAmount?: number; paidOn?: string; notes: string
+  /** Plan doc 16: set on the first approved deferral, never changed afterwards. */
+  originalDueDate?: string; rescheduleCount?: number
+  /** Generated from a payment term (traceability only). */
+  sourceTermId?: string; sourceInstallmentNo?: number
+  splitFromId?: string
+}
+export type ScheduleChangeKind = 'Defer' | 'Split' | 'Merge'
+export type ScheduleChangeStatus = 'Pending' | 'Approved' | 'Rejected' | 'Withdrawn'
+export interface ScheduleChangeLine { itemId?: string; oldDueDate?: string; newDueDate: string; oldAmount?: number; newAmount: number; newItemNo?: number }
+/** Plan doc 16 §3.2 — approved defer/split/merge of schedule items; keeps the total, no contract version. */
+export interface ScheduleChange {
+  id: string; contractId: string; changeNo: number; kind: ScheduleChangeKind; status: ScheduleChangeStatus; reason: string
+  /** Items the request touches (source items); `lines` are the result. */
+  itemIds: string[]; lines: ScheduleChangeLine[]
+  requestedBy: string; requestedAt: string; decidedBy?: string; decidedAt?: string; comment?: string
 }
 export interface BillingRecord {
   id: string; contractId: string; paymentItemId: string; docType: BillingDocType; ref: string; date: string; amount: number; currency: CurrencyCode
@@ -316,6 +334,7 @@ export interface DB {
   occurrences: ObligationOccurrence[]
   paymentItems: PaymentItem[]
   billingLog: BillingRecord[]
+  scheduleChanges: ScheduleChange[]
   guarantees: Guarantee[]
   clauses: Clause[]
   clauseVersions: ClauseVersion[]

@@ -2,6 +2,7 @@
 // Module 2 replaces the approval stub (submit/approve/reject) with the Elsa stage engine; everything else stays.
 import { addDays, today } from './asof'
 import { createVersion } from './amendments'
+import { cancelScheduleOnTermination } from './installments'
 import { cancelOnTermination } from './obligations'
 import { decide, eligibility, openRequest, startApproval } from './approval'
 import { rateOn } from './currency'
@@ -211,6 +212,7 @@ export function perform(d: DB, id: string, action: ActionId, p: { reason?: strin
       if (p.date < c.startDate) return 'تاريخ الإنهاء لا يسبق تاريخ البداية'
       c.terminationDate = p.date
       cancelOnTermination(d, c)
+      cancelScheduleOnTermination(d, c)
       record(d, c, 'Terminated', p.reason); return null
     case 'close': c.closureReason = 'Completed'; record(d, c, 'Closed', p.reason || 'اكتمل التنفيذ'); return null
     case 'cancel': record(d, c, 'Cancelled', p.reason); return null

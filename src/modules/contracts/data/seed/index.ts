@@ -61,6 +61,7 @@ export function seed(): DB {
     occurrences: [],
     paymentItems: [],
     billingLog: [],
+    scheduleChanges: [],
     guarantees: [],
     clauses: [],
     clauseVersions: [],

@@ -1,4 +1,4 @@
-// Reports R-01…R-17 and the global search (spec BR-R-01…06). Computed views only: every report starts from the contracts the current user may see
+// Reports R-01…R-18 and the global search (spec BR-R-01…06). Computed views only: every report starts from the contracts the current user may see
 // (data authority + confidentiality) and derives everything else from them, so aggregates are filtered before totals.
 import { addDays, today } from './asof'
 import { convertAmount, rateOn } from './currency'
@@ -8,7 +8,8 @@ import { agreementCfg, agreementStats, balanceOf, committedUnits, counterUnits, 
 import { amendStatusLabel, amendTypeLabel } from './amendments'
 import { canSee, graceEnd, missingSignatureRoles, noticeDeadline, partnerName, typeOf, userName } from './lifecycle'
 import { effStatus, isOpen, kindLabel, penaltyOf, statusLabel as oblLabel } from './obligations'
-import { financialSummary } from './payments'
+import { overdueDays } from './installments'
+import { effItemStatus, financialSummary, payStatusLabel } from './payments'
 import { serviceStats } from './service'
 import { openRequest } from './approval'
 import type { Contract, ContractLine, CurrencyCode, DB } from './types'
@@ -168,6 +169,19 @@ export const reports: ReportDef[] = [
       const rows: Row[] = ls.map((l) => { const c = db.contracts.find((x) => x.id === l.contractId)!, s = ledgerSums(db, l.id), b = balanceOf(db, l.id), d = hasDrift(db, l.id); return { id: l.id, to: `/contracts/${c.id}`, cells: { contract: c.number, line: `${l.lineNum}. ${lineName(db, l)}`, ledger: `${num(s.relQ, 2)} / ${num(s.fulQ, 2)} / ${num(s.invQ, 2)}`, bal: `${num(b.relQ, 2)} / ${num(b.fulQ, 2)} / ${num(b.invQ, 2)}`, st: d ? 'انحراف' : 'سليم' } } })
       const bad = rows.filter((r) => r.cells.st === 'انحراف').length
       return { cols: [{ key: 'contract', label: 'العقد' }, { key: 'line', label: 'البند' }, { key: 'ledger', label: 'الدفتر (محجوز/منفّذ/مفوتر)' }, { key: 'bal', label: 'الرصيد' }, { key: 'st', label: 'الحالة' }], rows, foot: { contract: `${rows.length} بند`, st: bad ? `${bad} منحرف` : 'صفر انحراف' }, note: 'الانحراف يظهر فقط إذا أُفسد رصيد أو فُقد حدث (محاكاة من تبويب التنفيذ)؛ «إعادة الاحتساب» تعالجه.' }
+    } },
+  { id: 'installments', code: 'R-18', title: 'الأقساط المستحقة والمتأخرة', group: 'المتابعة', desc: 'أقساط الجدول غير المسددة: الاستحقاق وأيام التأخر ومرات التأجيل', filters: [F.partner, F.direction, { key: 'only', label: 'العرض', options: () => [{ value: 'overdue', label: 'المتأخرة غير المفوترة' }, { value: 'deferred', label: 'المؤجلة' }, { value: 'unpaid', label: 'مفوترة بلا سداد كامل' }] }],
+    build: (db, f) => {
+      const cs = new Map(applyBase(db, db.contracts, f).map((c) => [c.id, c]))
+      const list = db.paymentItems.filter((p) => cs.has(p.contractId) && !['Paid', 'Cancelled'].includes(p.status)
+        && (f.only !== 'overdue' || overdueDays(p) > 0) && (f.only !== 'deferred' || (p.rescheduleCount ?? 0) > 0) && (f.only !== 'unpaid' || p.status === 'Invoiced')).sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+      const open = (id: string) => db.scheduleChanges.some((x) => x.status === 'Pending' && x.itemIds.includes(id))
+      const rows: Row[] = list.map((p) => { const c = cs.get(p.contractId)!; return { id: p.id, to: `/contracts/${c.id}?tab=financial`, cells: {
+        contract: c.number, partner: partnerName(db, c), no: p.itemNo, due: fmtDate(p.dueDate), orig: p.originalDueDate ? fmtDate(p.originalDueDate) : '—', late: overdueDays(p) || '—',
+        amount: money(p.amount, p.currency), paid: p.paidAmount !== undefined ? money(p.paidAmount, p.currency) : p.status === 'Invoiced' ? 'غير متاح' : '—', status: payStatusLabel[effItemStatus(p)], def: p.rescheduleCount ?? 0, req: open(p.id) ? 'طلب مفتوح' : '' } } })
+      const sum = (cur: CurrencyCode) => list.filter((p) => p.currency === cur).reduce((s, p) => s + p.amount - (p.paidAmount ?? 0), 0)
+      return { cols: [{ key: 'contract', label: 'العقد' }, { key: 'partner', label: 'الطرف' }, { key: 'no', label: 'القسط', num: true }, { key: 'due', label: 'الاستحقاق' }, { key: 'orig', label: 'الاستحقاق الأصلي' }, { key: 'late', label: 'أيام التأخر', num: true }, { key: 'amount', label: 'المبلغ', num: true }, { key: 'paid', label: 'المدفوع', num: true }, { key: 'status', label: 'الحالة' }, { key: 'def', label: 'مرات التأجيل', num: true }, { key: 'req', label: 'تغيير معلّق' }],
+        rows, foot: { contract: `${list.length} قسط`, amount: `${num(sum('IQD'))} IQD + ${num(sum('USD'), 2)} USD غير مسدد` }, note: 'أيام التأخر للأقساط غير المفوترة فقط؛ تأخر سداد الفاتورة يُتابع في المالية.' }
     } },
 ]
 export const reportById = (id: string) => reports.find((r) => r.id === id)
