@@ -1,4 +1,4 @@
-import { ChevronLeft, ClipboardList, FileSignature, Menu, type LucideIcon } from 'lucide-react'
+import { ChevronLeft, ClipboardList, FileSignature, Menu, Wrench, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { assetNav } from '../modules/assets/components/Layout'
@@ -7,6 +7,9 @@ import { featureOn } from '../modules/contracts/data/admin'
 import { useStore as useContractsStore } from '../modules/contracts/data/store'
 import { contractNav } from '../modules/contracts/lib/navigation'
 import { CONTRACTS_BASE } from '../modules/contracts/router'
+import { maintenanceNav } from '../modules/maintenance/components/Layout'
+import { useStore as useMaintenanceStore } from '../modules/maintenance/data/store'
+import { MAINTENANCE_BASE } from '../modules/maintenance/router'
 
 interface NavEntry { to: string; label: string; icon: LucideIcon; section?: string; soon?: boolean; sub?: boolean }
 
@@ -67,6 +70,8 @@ function ModuleGroup({ base, title, icon: Icon, entries, endPaths, collapsed }: 
 
 export function Sidebar() {
   const { can, db } = useContractsStore()
+  const { can: canMaint } = useMaintenanceStore()
+  const maintenanceEntries = maintenanceNav.filter((n) => !n.perm || canMaint(n.perm))
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 900)
   const contractEntries = contractNav.filter((n) => (n.module !== 'analytics' || can('Reports.View')) && (!n.feature || featureOn(db, n.feature)) && (n.module !== 'settings-access' || n.to === '/settings/approval-stages' || can('Settings.Manage')))
 
@@ -85,6 +90,7 @@ export function Sidebar() {
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
         <ModuleGroup base={ASSETS_BASE} title="الموجودات الثابتة" icon={ClipboardList} entries={assetNav} endPaths={['/']} collapsed={collapsed} />
         <ModuleGroup base={CONTRACTS_BASE} title="إدارة العقود" icon={FileSignature} entries={contractEntries} endPaths={['/', '/reports', '/service', '/agreements']} collapsed={collapsed} />
+        <ModuleGroup base={MAINTENANCE_BASE} title="إدارة الصيانة" icon={Wrench} entries={maintenanceEntries} endPaths={['/', '/schedule', '/billing']} collapsed={collapsed} />
 
       </nav>
 

@@ -23,3 +23,8 @@ Append-only. Module-level history: `docs/assets/WORKLOG.md`, `docs/contracts/WOR
 - Upstream changes: terminology «إهلاك» → «اندثار» across the module, plus edits to `calc`, `asof`, `documents`, `format`, `lifecycle`, `permissions`, `seed`, `store` and most pages (Dashboard, Depreciation, Reports, Settings, SalesInvoices, AssetDocs, AssetForm, MasterData, OpeningBalances, Shared); `docs/assets` (plan addendum, README, WORKLOG) refreshed.
 - Method as before: re-copied upstream `src` through the router-import transform and synced every file except `App.tsx` (routes unchanged → `AssetsApp.tsx` untouched) and `Layout.tsx` (only 3 nav labels changed upstream, applied by hand). `scripts/assets` was already identical, no new scripts, `package.json` unchanged.
 - Verified: `tsc -b`, build, `check:assets` and `check:contracts` pass.
+
+## 2026-11-07 — Shell: register the maintenance module
+
+- New module `src/modules/maintenance` (built directly in this repo, see `docs/maintenance/`). Shell edits only: route `/maintenance/*` in `App.tsx`, `MaintenanceStoreProvider` in `main.tsx` (third store, key `enki-maintenance-mock`), third sidebar group «إدارة الصيانة» (menu filtered by the maintenance store's permissions), hub card, `CLAUDE.md` module table.
+- Verified: `tsc -b`, build, `npm run check`, browser pass (no console errors). No commits (owner decision).

@@ -1,11 +1,13 @@
-import { ClipboardList, FileSignature, type LucideIcon } from 'lucide-react'
+import { ClipboardList, FileSignature, Wrench, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { ASSETS_BASE } from '../modules/assets/router'
 import { CONTRACTS_BASE } from '../modules/contracts/router'
+import { MAINTENANCE_BASE } from '../modules/maintenance/router'
 
 const modules: { to: string; title: string; text: string; icon: LucideIcon }[] = [
   { to: ASSETS_BASE, title: 'الموجودات الثابتة', text: 'سجل الأصول، الإهلاك، إعادة التقييم، النقل والاستبعاد، الصيانة والتقارير.', icon: ClipboardList },
   { to: CONTRACTS_BASE, title: 'إدارة العقود', text: 'العقود والاتفاقيات، الملاحق والتجديد، الالتزامات والدفعات، القوالب والاعتماد.', icon: FileSignature },
+  { to: MAINTENANCE_BASE, title: 'إدارة الصيانة', text: 'طلبات الصيانة والتقديرات والاعتماد، أوامر العمل والقطع، جدولة الفنيين، الفوترة والعربون، التقارير.', icon: Wrench },
 ]
 
 export default function Hub() {

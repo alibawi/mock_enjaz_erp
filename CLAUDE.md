@@ -1,11 +1,12 @@
 # CLAUDE.md — ENKI ERP (Enjaz) combined mock
 
-One clickable prototype that merges two standalone mocks behind a single shell:
+One clickable prototype that merges two standalone mocks behind a single shell, plus the maintenance module built directly in it:
 
 | Module | Route prefix | Source folder | Docs |
 |---|---|---|---|
 | الموجودات الثابتة (Fixed Assets) | `/fixed-assets` | `src/modules/assets` | `docs/assets/` |
 | إدارة العقود (Contracts Management) | `/contract-mgmt` | `src/modules/contracts` | `docs/contracts/` |
+| إدارة الصيانة (Maintenance Management) | `/maintenance` | `src/modules/maintenance` | `docs/maintenance/` |
 
 Stack: Vite + React 18 + TypeScript + Tailwind v3, HashRouter, client-side stores persisted to `localStorage`.
 `npm run dev` / `npm run build` / `npm run check`. Never touches the JasimERP code base.
@@ -14,7 +15,7 @@ Stack: Vite + React 18 + TypeScript + Tailwind v3, HashRouter, client-side store
 
 - `src/shell/` — the only code that knows about both modules: `Sidebar.tsx` (one sidebar, one expandable group per module), `Hub.tsx` (landing page at `/`), `routerShim.tsx`.
 - `src/modules/<module>/` — the original mock, unchanged apart from the points below. `<Module>App.tsx` is the old `App.tsx` (routes), `router.tsx` is the module's router shim.
-- `scripts/<module>/` — the original engine/flow checks (imports repointed). `npm run check` runs the assets engine check and the contracts integrity check; `check:contracts:<flow>` runs one flow script.
+- `scripts/<module>/` — the original engine/flow checks (imports repointed). `npm run check` runs the assets engine check and the contracts integrity check; `check:contracts:<flow>` runs one flow script. `npm run check` also runs `check:maintenance` (`scripts/maintenance/flow-check.ts`: seed integrity + the full request → close flow, rework and failed consumption).
 
 ## How the merge works (read before changing anything)
 

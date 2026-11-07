@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>خطة وحدة الصيانة</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface-2: #f0f0ec;
+    --text: #1c1c1a;
+    --muted: #62625d;
+    --border: #e2e2dc;
+    --accent: #1f6f5c;
+    --accent-soft: #e3f1ec;
+    --warn: #9a5b00;
+    --warn-soft: #fbf0dc;
+    --danger: #a3312b;
+    --danger-soft: #f8e4e2;
+    --info: #2b5797;
+    --info-soft: #e4ecf8;
+    --code-bg: #f3f3ef;
+    --shadow: 0 1px 2px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141413;
+      --surface: #1d1d1b;
+      --surface-2: #262623;
+      --text: #ecebe6;
+      --muted: #a4a39c;
+      --border: #34342f;
+      --accent: #5cc3a6;
+      --accent-soft: #1c3530;
+      --warn: #e2a74b;
+      --warn-soft: #3a2d17;
+      --danger: #ec8a83;
+      --danger-soft: #3d2120;
+      --info: #8fb4ec;
+      --info-soft: #1e2a3d;
+      --code-bg: #262623;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141413; --surface: #1d1d1b; --surface-2: #262623; --text: #ecebe6; --muted: #a4a39c;
+    --border: #34342f; --accent: #5cc3a6; --accent-soft: #1c3530; --warn: #e2a74b; --warn-soft: #3a2d17;
+    --danger: #ec8a83; --danger-soft: #3d2120; --info: #8fb4ec; --info-soft: #1e2a3d; --code-bg: #262623; --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Noto Sans Arabic", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1240px; margin: 0 auto; }
+  nav.toc {
+    position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+    padding: 28px 18px; border-inline-start: 1px solid var(--border);
+  }
+  nav.toc h2 { font-size: 13px; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  nav.toc a { display: block; color: var(--text); text-decoration: none; font-size: 14px; padding: 5px 8px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--surface-2); }
+  main { padding: 32px 40px 80px; min-width: 0; }
+
+  header.hero { margin-bottom: 36px; }
+  .badge { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 999px; }
+  .badge.ok { background: var(--accent-soft); color: var(--accent); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.no { background: var(--danger-soft); color: var(--danger); }
+  .badge.info { background: var(--info-soft); color: var(--info); }
+  h1 { font-size: 30px; line-height: 1.35; margin: 12px 0 8px; }
+  h2 { font-size: 22px; margin: 52px 0 14px; padding-top: 8px; border-top: 1px solid var(--border); }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 8px 0; }
+  .lead { color: var(--muted); font-size: 17px; max-width: 70ch; }
+  .meta { color: var(--muted); font-size: 14px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; margin: 14px 0; box-shadow: var(--shadow);
+  }
+  .card h3 { margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .stat b { display: block; font-size: 22px; }
+  .stat span { color: var(--muted); font-size: 14px; }
+
+  .example {
+    background: var(--info-soft); border-inline-start: 4px solid var(--info);
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+  }
+  .example::before { content: "مثال"; display: block; font-weight: 700; color: var(--info); font-size: 13px; margin-bottom: 4px; }
+  .note {
+    background: var(--warn-soft); border-inline-start: 4px solid var(--warn);
+    border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+  }
+  .note::before { content: "تنبيه"; display: block; font-weight: 700; color: var(--warn); font-size: 13px; margin-bottom: 4px; }
+
+  .table-wrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 14.5px; }
+  th, td { text-align: start; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  code, .code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; background: var(--code-bg); padding: 1px 6px; border-radius: 5px; direction: ltr; unicode-bidi: embed; }
+
+  .journal { font-size: 14px; }
+  .journal td:first-child { width: 48%; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 16px 0; }
+  .flow .step {
+    flex: 1 1 140px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; position: relative;
+  }
+  .flow .step b { display: block; font-size: 14px; }
+  .flow .step span { font-size: 13px; color: var(--muted); }
+  .flow .step .n { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--surface); font-size: 12px; text-align: center; line-height: 22px; margin-inline-end: 6px; }
+
+  ul, ol { padding-inline-start: 22px; margin: 6px 0; }
+  li { margin: 3px 0; }
+  .decision-id { font-family: Consolas, monospace; font-size: 12.5px; color: var(--muted); }
+  footer { margin-top: 60px; color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; border-inline-start: 0; border-bottom: 1px solid var(--border); padding: 16px; }
+    main { padding: 20px 16px 60px; }
+    h1 { font-size: 24px; }
+  }
+  @media print {
+    nav.toc { display: none; }
+    .layout { display: block; }
+    .card, .example, .note { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="المحتويات">
+    <h2>المحتويات</h2>
+    <a href="#summary">١. الملخص</a>
+    <a href="#scope">٢. نطاق النسخة الأولى</a>
+    <a href="#flow">٣. الدورة الكاملة</a>
+    <a href="#example">٤. مثال شامل بالأرقام</a>
+    <a href="#asset">٥. بطاقة الأصل</a>
+    <a href="#docs">٦. المستندات والرموز</a>
+    <a href="#inventory">٧. قرارات المخزون</a>
+    <a href="#accounting">٨. قرارات المحاسبة</a>
+    <a href="#billing">٩. الفوترة والعربون</a>
+    <a href="#approval">١٠. اعتماد التقدير</a>
+    <a href="#hours">١١. ساعات العمل</a>
+    <a href="#scheduling">١٢. جدولة الصيانة والفنيين</a>
+    <a href="#general">١٣. قرارات عامة</a>
+    <a href="#reports">١٤. التقارير</a>
+    <a href="#prereq">١٥. متطلبات الوحدات الأخرى</a>
+    <a href="#done">١٦. ما نُفّذ حتى الآن</a>
+    <a href="#roadmap">١٧. مراحل التنفيذ</a>
+    <a href="#risks">١٨. ما بقي غير محقق</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <span class="badge ok">معتمدة نهائيًا — 31 أكتوبر 2026</span>
+      <h1>خطة وحدة إدارة الصيانة — JasimERP</h1>
+      <p class="lead">ملخص الخطة المعتمدة مع أمثلة عملية لكل قرار. المرجع التفصيلي الكامل هو الملف <code>docs/planning/maintenance/maintenance-management-implementation-plan.md</code>، وعند أي اختلاف يُعتمد القرار المؤرخ فيه.</p>
+      <p class="meta">التقنيات: .NET 9 · ABP 9.1.1 · EF Core / SQL Server · Vue 3 + Vuetify + DevExtreme · Elsa 3 للاعتمادات</p>
+    </header>
+
+    <!-- 1 -->
+    <section id="summary">
+      <h2>١. الملخص</h2>
+      <p>وحدة <code>Enki.Maintenance</code> موجودة كهيكل فارغ في المشروع ومربوطة بالخادم. الخطة تملؤها بما يخص الصيانة فقط، وتستخدم الوحدات الموجودة لكل ما عداه:</p>
+      <div class="grid">
+        <div class="stat"><b>المخزون</b><span>الصرف والحجز عبر سند الصرف الموجود — الصيانة لا تحرّك الأرصدة بنفسها</span></div>
+        <div class="stat"><b>المبيعات</b><span>فاتورة خدمة مرحَّلة ومقفلة، دون أي حركة مخزون</span></div>
+        <div class="stat"><b>المالية</b><span>العربون سند قبض على الحساب، والصيانة لا تكتب قيودًا مباشرة</span></div>
+        <div class="stat"><b>Core / Elsa</b><span>اعتماد التقدير عبر سير عمل Elsa ومهام Core</span></div>
+      </div>
+      <p>السلسلة الأساسية: <b>طلب صيانة ← تقدير ← أمر عمل</b>، مع سجل أصول مستقل عن مخزون المواد.</p>
+    </section>
+
+    <!-- 2 -->
+    <section id="scope">
+      <h2>٢. نطاق النسخة الأولى (MVP)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3><span class="badge ok">داخل النطاق</span></h3>
+          <ul>
+            <li>البيانات الرئيسية والإعدادات</li>
+            <li>سجل الأصول (مع بيانات السيارات)</li>
+            <li>استلام الطلب وإيصال الاستلام</li>
+            <li>التقدير واعتماده</li>
+            <li>أمر العمل بالقطع والعمالة</li>
+            <li>حجز القطع عند البدء</li>
+            <li>جدولة أوامر العمل والفنيين عبر وحدة الجدولة</li>
+            <li>صرف المخزون والإرجاع</li>
+            <li>إصدار فاتورة الخدمة</li>
+            <li>ضمان بسيط، صلاحيات، مرفقات، سجل تاريخي</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><span class="badge warn">لاحقًا</span></h3>
+          <ul>
+            <li>طلب الشراء التلقائي من أمر العمل</li>
+            <li>تغطية العقود و SLA</li>
+            <li>الصيانة الوقائية (PM)</li>
+            <li>لوحة التقويم بالسحب والإفلات، ومهارات الفنيين</li>
+            <li>فحوص الجودة المتقدمة</li>
+            <li>تطبيق الجوال وتحليلات التوقف</li>
+            <li>تحويل ساعات الصيانة إلى الرواتب</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="flow">
+      <h2>٣. الدورة الكاملة</h2>
+      <div class="flow" role="list">
+        <div class="step" role="listitem"><b><span class="n">1</span>طلب الصيانة</b><span>استلام الأصل وإيصال</span></div>
+        <div class="step" role="listitem"><b><span class="n">2</span>التقدير</b><span>قطع + عمالة + تغطية</span></div>
+        <div class="step" role="listitem"><b><span class="n">3</span>الاعتماد</b><span>داخلي، ثم موافقة العميل</span></div>
+        <div class="step" role="listitem"><b><span class="n">4</span>العربون</b><span>سند قبض على الحساب (اختياري)</span></div>
+        <div class="step" role="listitem"><b><span class="n">5</span>بدء أمر العمل</b><span>حجز القطع</span></div>
+        <div class="step" role="listitem"><b><span class="n">6</span>الإكمال</b><span>صرف تلقائي للقطع المستهلكة</span></div>
+        <div class="step" role="listitem"><b><span class="n">7</span>الفاتورة</b><span>فاتورة خدمة مرحَّلة ومقفلة</span></div>
+        <div class="step" role="listitem"><b><span class="n">8</span>السداد والإغلاق</b><span>تخصيص العربون ثم الإغلاق</span></div>
+      </div>
+      <p>حالات أمر العمل: <code>Created → Planned → Scheduled → InProgress → (WaitingParts / WaitingCustomer / OnHold) → QualityCheck → Completed → Closed</code>. حالة الفوترة وحالة التسليم أبعاد منفصلة عن حالة أمر العمل.</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="example">
+      <h2>٤. مثال شامل بالأرقام</h2>
+      <p>عميل يُدخل سيارته لتغيير الزيت والفلاتر وفحص الفرامل. الأرقام توضيحية (دينار).</p>
+
+      <h3>التقدير والاعتماد</h3>
+      <div class="table-wrap"><table>
+        <tr><th>البند</th><th class="num">الكمية</th><th class="num">السعر</th><th class="num">المجموع</th></tr>
+        <tr><td>فلتر زيت</td><td class="num">1</td><td class="num">25,000</td><td class="num">25,000</td></tr>
+        <tr><td>زيت محرك (لتر)</td><td class="num">5</td><td class="num">15,000</td><td class="num">75,000</td></tr>
+        <tr><td>فحمات فرامل</td><td class="num">1</td><td class="num">50,000</td><td class="num">50,000</td></tr>
+        <tr><td>عمالة ميكانيك (ساعة)</td><td class="num">4</td><td class="num">25,000</td><td class="num">100,000</td></tr>
+        <tr><th>الإجمالي</th><th></th><th></th><th class="num">250,000</th></tr>
+      </table></div>
+      <p>حد الاعتماد المضبوط للمؤسسة 1,000,000، فالتقدير <b>يُعتمد تلقائيًا</b> ويُسجَّل ذلك في سجل التدقيق. يوافق العميل هاتفيًا، وتُسجَّل موافقته على النسخة المعتمدة.</p>
+
+      <h3>العربون — 100,000</h3>
+      <div class="table-wrap"><table class="journal">
+        <tr><th>الحساب</th><th class="num">مدين</th><th class="num">دائن</th></tr>
+        <tr><td>الصندوق</td><td class="num">100,000</td><td class="num"></td></tr>
+        <tr><td>حساب العميل (رصيد دائن حتى الفاتورة)</td><td class="num"></td><td class="num">100,000</td></tr>
+      </table></div>
+
+      <h3>بدء أمر العمل</h3>
+      <p>تُحجز القطع: فلتر واحد، 5 لترات زيت، طقم فحمات. لا تُباع لغيره أثناء الإصلاح. لو كان المخزون ناقصًا لما بدأ أمر العمل.</p>
+
+      <h3>الإكمال — صرف تلقائي</h3>
+      <p>استهلك الفني 4 لترات فقط. عند الإكمال يُنشأ سند صرف تلقائيًا بالمستهلك فعلًا، ويُرفع الحجز عن اللتر الخامس. تكلفة القطع المصروفة 90,000:</p>
+      <div class="table-wrap"><table class="journal">
+        <tr><th>الحساب</th><th class="num">مدين</th><th class="num">دائن</th></tr>
+        <tr><td>تكلفة المبيعات (عمل لعميل)</td><td class="num">90,000</td><td class="num"></td></tr>
+        <tr><td>المخزون (حساب المخزن)</td><td class="num"></td><td class="num">90,000</td></tr>
+      </table></div>
+
+      <h3>الفاتورة — فاتورة خدمة مرحَّلة</h3>
+      <p>بعد خصم اللتر غير المستهلك: قطع 135,000 + عمالة 100,000 = 235,000. حساب الإيراد لكل سطر من بطاقة المادة أو الخدمة.</p>
+      <div class="table-wrap"><table class="journal">
+        <tr><th>الحساب</th><th class="num">مدين</th><th class="num">دائن</th></tr>
+        <tr><td>حساب العميل</td><td class="num">235,000</td><td class="num"></td></tr>
+        <tr><td>إيراد قطع الغيار (من بطاقة المادة)</td><td class="num"></td><td class="num">135,000</td></tr>
+        <tr><td>إيراد خدمات الصيانة (من بطاقة الخدمة)</td><td class="num"></td><td class="num">100,000</td></tr>
+      </table></div>
+
+      <h3>السداد</h3>
+      <ol>
+        <li>يُخصَّص العربون 100,000 للفاتورة ← المدفوع 100,000، حالة السداد <code>P</code> (جزئي).</li>
+        <li>يدفع العميل 135,000 الباقية ← حالة السداد <code>C</code> (مسددة).</li>
+        <li>الفاتورة لم تعد قابلة للإلغاء ما دام عليها أي مبلغ مدفوع.</li>
+      </ol>
+
+      <h3>تقرير الربحية (للتقارير فقط)</h3>
+      <div class="table-wrap"><table>
+        <tr><th>البند</th><th class="num">المبلغ</th></tr>
+        <tr><td>الإيراد</td><td class="num">235,000</td></tr>
+        <tr><td>تكلفة القطع (من سند الصرف)</td><td class="num">−90,000</td></tr>
+        <tr><td>تكلفة العمالة: 4 ساعات × 12,500 معدل قياسي (لا تُرحَّل محاسبيًا)</td><td class="num">−50,000</td></tr>
+        <tr><th>هامش أمر العمل</th><th class="num">95,000</th></tr>
+      </table></div>
+    </section>
+
+    <!-- asset card -->
+    <section id="asset">
+      <h2>٥. بطاقة الأصل (MaintainableAsset)</h2>
+      <p>بطاقة لكل قطعة تُصان بعينها، تشبه بطاقة المادة في الشكل لكنها تختلف في المعنى. تقابل <b>Equipment Card</b> في SAP Business One و<b>Customer Asset</b> في Dynamics، وتُبنى في المرحلة P2 ضمن النسخة الأولى.</p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>بطاقة المادة</h3>
+          <p>تصف <b>نوعًا</b> من البضاعة.</p>
+          <p class="meta">مثال: "مكيف LG 2 طن" — في المخزون 100 قطعة.</p>
+        </div>
+        <div class="card">
+          <h3>بطاقة الأصل</h3>
+          <p>تصف <b>قطعة واحدة بعينها</b> ويُسجَّل عليها كل ما يحدث لها.</p>
+          <p class="meta">مثال: "مكيف LG رقمه SN-12345 في بيت زيد".</p>
+        </div>
+      </div>
+
+      <h3>محتويات البطاقة</h3>
+      <div class="table-wrap"><table>
+        <tr><th>القسم</th><th>الحقول</th></tr>
+        <tr><td>الهوية</td><td>الرمز، الاسم، الفئة، الرقم التسلسلي، الموديل، الماركة</td></tr>
+        <tr><td>المالك</td><td>عميل أو الشركة نفسها، والشريك المالك</td></tr>
+        <tr><td>الربط</td><td>المادة إن بيعت من مخزوننا (اختياري)، مركز التكلفة، الأصل الثابت (لاحقًا)</td></tr>
+        <tr><td>الضمان</td><td>تاريخ بداية الضمان ونهايته</td></tr>
+        <tr><td>الموقع والتركيب</td><td>الموقع، و"الأصل الأب" للمكونات (ضاغط داخل مكيف)</td></tr>
+        <tr><td>الحالة</td><td>فعال · معار · متقاعد</td></tr>
+        <tr><td>سمات حسب النوع</td><td>حقل JSON بقالب لكل نوع أصل — مكيف: BTU ونوع الغاز · مولد: KVA</td></tr>
+      </table></div>
+
+      <h3>إضافات مرتبطة</h3>
+      <ul>
+        <li><b>بيانات السيارة</b> (امتداد للبطاقة): رقم اللوحة، رقم الشاصي VIN، الماركة، الموديل، السنة، رقم المحرك، الوقود، ناقل الحركة، اللون.</li>
+        <li><b>العدادات</b>: كيلومترات أو ساعات تشغيل، مع سجل بكل القراءات السابقة لا يُعدَّل.</li>
+        <li><b>التاريخ</b>: كل طلبات الصيانة والتقديرات وأوامر العمل والقطع المصروفة والتكلفة الكلية لهذا الأصل.</li>
+      </ul>
+
+      <div class="example">
+        <b>سيارة العميل أحمد — لوحة 12345 بغداد</b>
+        <div class="table-wrap"><table>
+          <tr><th>الحقل</th><th>القيمة</th></tr>
+          <tr><td>الرمز</td><td><code>AST-000321</code></td></tr>
+          <tr><td>الفئة</td><td>سيارات</td></tr>
+          <tr><td>المالك</td><td>عميل — أحمد</td></tr>
+          <tr><td>الماركة / الموديل / السنة</td><td>تويوتا كامري 2021</td></tr>
+          <tr><td>VIN</td><td><code>4T1B11HK5MU123456</code></td></tr>
+          <tr><td>الضمان</td><td>حتى 2027-03-01 (ساري)</td></tr>
+          <tr><td>آخر قراءة عداد</td><td>84,200 كم</td></tr>
+        </table></div>
+        <p>تُفتح البطاقة مرة واحدة في أول زيارة. في الزيارة التالية يُختار الأصل فقط، فيظهر للموظف:</p>
+        <div class="table-wrap"><table>
+          <tr><th>التاريخ</th><th>أمر العمل</th><th>العمل</th><th class="num">العداد</th><th class="num">التكلفة</th></tr>
+          <tr><td>2026-02-10</td><td><code>MWO-2026-000041</code></td><td>تغيير زيت وفلاتر</td><td class="num">76,900</td><td class="num">235,000</td></tr>
+          <tr><td>2026-07-22</td><td><code>MWO-2026-000187</code></td><td>فحمات فرامل (ضمان)</td><td class="num">81,350</td><td class="num">0</td></tr>
+          <tr><td>2026-10-31</td><td><code>MWO-2026-000302</code></td><td>تغيير زيت وفحص فرامل</td><td class="num">84,200</td><td class="num">235,000</td></tr>
+        </table></div>
+        <p>فيعرف فورًا أن الضمان ساري، وأن الفرامل استُبدلت قبل 3 أشهر، فيُحتمل أن تكون المشكلة الجديدة "إعادة عمل" بلا فاتورة (القرار 13).</p>
+      </div>
+
+      <div class="example">
+        <b>مكيف داخل بيت زيد مع مكوّن</b>
+        <p>الأصل الأب: مكيف LG 2 طن، رقمه SN-12345، BTU = 24,000، غاز R410. الأصل الابن: الضاغط برقمه الخاص. عند استبدال الضاغط ضمن الضمان يُسجَّل الإصلاح على الضاغط ويظهر أيضًا في تاريخ المكيف.</p>
+      </div>
+
+      <h3>قواعد محسومة</h3>
+      <ul>
+        <li>البطاقة <b>مستقلة عن المخزون</b>: لا يلزم أن يكون الأصل مادة عندنا؛ سيارة اشتراها العميل من مكان آخر تُسجَّل عادي.</li>
+        <li>الرقم التسلسلي فريد داخل المؤسسة، ويمكن تسجيل أصل بلا رقم تسلسلي.</li>
+        <li>مالك الأصل قد يختلف عن الشريك المُفوتَر (القرار 4).</li>
+        <li>أمر العمل يحفظ لقطة من بيانات الأصل (الرمز، الرقم التسلسلي، اللوحة، قراءة العداد) حتى لو تغيّرت البطاقة لاحقًا.</li>
+      </ul>
+      <div class="note">ليس في النسخة الأولى: الإنشاء التلقائي للبطاقة عند بيع مادة برقم تسلسلي (كما في SAP). يمكن إضافته لاحقًا.</div>
+    </section>
+
+    <!-- 6 -->
+    <section id="docs">
+      <h2>٦. المستندات والرموز</h2>
+      <p>النطاق المعتمد للصيانة: <b>260–269</b>.</p>
+      <div class="table-wrap"><table>
+        <tr><th>الرمز</th><th>البادئة</th><th>المستند</th><th>المرحلة</th></tr>
+        <tr><td>260</td><td><code>MRQ</code></td><td>طلب صيانة</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>261</td><td><code>MES</code></td><td>تقدير إصلاح</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>262</td><td><code>MWO</code></td><td>أمر عمل صيانة</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>263</td><td><code>MHO</code></td><td>تسليم الأصل</td><td><span class="badge warn">لاحقًا</span></td></tr>
+        <tr><td>264</td><td><code>MWC</code></td><td>مطالبة ضمان</td><td><span class="badge warn">لاحقًا</span></td></tr>
+        <tr><td>265</td><td><code>MPP</code></td><td>خطة صيانة وقائية</td><td><span class="badge warn">لاحقًا</span></td></tr>
+        <tr><td>266–269</td><td>—</td><td>محجوزة (266 مقترح لدفعة الساعات إن احتجنا لاحقًا)</td><td><span class="badge info">محجوز</span></td></tr>
+      </table></div>
+      <p>رأس أمر العمل كيان مستقل خاص بالصيانة (<code>MaintenanceDocumentBase</code>)، وليس <code>DocBase</code>، لأن DocBase مخصص للمستندات المالية والمخزنية.</p>
+    </section>
+
+    <!-- 6 -->
+    <section id="inventory">
+      <h2>٧. قرارات المخزون</h2>
+
+      <div class="card">
+        <span class="decision-id">1e · 1g</span>
+        <h3>الصرف: على أمر العمل مباشرة، وتلقائي عند الإكمال</h3>
+        <p>عند إكمال أمر العمل يُنشأ سند صرف بالكميات المستهلكة فعلًا، دون تدخل المستخدم. إعداد في قسم الصيانة: <code>Automatic</code> (الافتراضي) أو <code>Manual</code>.</p>
+        <div class="example">أكمل الفني أمر العمل الساعة 5 مساءً، فيُصدر سند الصرف فورًا. إذا فشل (مثلًا لا توجد فترة محاسبية مفتوحة) يبقى أمر العمل "مكتمل" مع حالة صرف "فشل" وزر إعادة المحاولة، ولا يضيع الإصلاح.</div>
+      </div>
+
+      <div class="card">
+        <span class="decision-id">1f</span>
+        <h3>لا صرف أكبر من المتاح</h3>
+        <p>الافتراضي <code>Block</code>: يُمنع إنهاء أمر العمل إذا كانت كمية أي قطعة أكبر من المتاح. البديل في الإعدادات: <code>AllowCompleteAndRetry</code>. المخزون السالب ممنوع دائمًا.</p>
+        <div class="example">سجل الفني 3 فحمات والمتاح 2 ← رسالة تمنع الإكمال حتى يصحح الكمية أو يصل المخزون. تصحيح صرف زائد بعد الترحيل يتم بإلغاء السند وإعادة الصرف.</div>
+      </div>
+
+      <div class="card">
+        <span class="decision-id">5</span>
+        <h3>حجز القطع عند بدء أمر العمل</h3>
+        <p>تُحجز القطع المخططة عند البدء، ويُرفع الحجز عند الصرف أو الإلغاء أو بعد الإكمال لما لم يُستهلك.</p>
+        <div class="example">خُطط 5 لترات واستُهلك 4: يتحول 4 إلى صرف، ويُرفع الحجز عن اللتر الخامس تلقائيًا.</div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="accounting">
+      <h2>٨. قرارات المحاسبة</h2>
+
+      <div class="card">
+        <span class="decision-id">1c</span>
+        <h3>أنواع مصاريف الصيانة مربوطة بحسابات</h3>
+        <p>جدول بيانات رئيسي <code>MaintenanceExpenseType</code>: رمز، اسم، حساب مصروف، نطاق. النوع على رأس أمر العمل، ويمكن تغييره لكل سطر بصلاحية.</p>
+        <div class="table-wrap"><table>
+          <tr><th>النوع</th><th>الحساب</th><th>يُستخدم في</th></tr>
+          <tr><td>بيع لعميل</td><td>تكلفة المبيعات</td><td>إصلاح مدفوع</td></tr>
+          <tr><td>ضمان</td><td>مصروف الضمان</td><td>استبدال ضاغط مجانًا</td></tr>
+          <tr><td>صيانة آلات ومعدات</td><td>مصروف صيانة آلات</td><td>رافعة الشركة الشوكية</td></tr>
+          <tr><td>صيانة سيارات</td><td>مصروف صيانة سيارات</td><td>سيارة التوزيع</td></tr>
+          <tr><td>صيانة مبانٍ</td><td>مصروف صيانة مبانٍ</td><td>مكيف المكتب</td></tr>
+          <tr><td>حسن نية</td><td>مصروف حسن نية</td><td>قطعة مجانية لعميل</td></tr>
+        </table></div>
+        <div class="example">سند صرف واحد فيه فلتران لرافعة الشركة (50,000) وضاغط ضمان (800,000):<br>
+          مدين مصروف صيانة آلات 50,000 · مدين مصروف الضمان 800,000 · دائن المخزون 850,000.</div>
+        <p class="meta">المطلوب من فريق المخزون: قبول حساب لكل سطر في مستندات الصيانة (I2). حتى ذلك الحين يُقيَّد على تكلفة المبيعات ويُحفظ الحساب المقصود على أمر العمل للتقارير.</p>
+      </div>
+
+      <div class="card">
+        <span class="decision-id">1d</span>
+        <h3>شريك داخلي لكل مؤسسة</h3>
+        <p>سند الصرف يشترط شريكًا، لكنه لا ينشئ ذممًا (القيد مصروف/مخزون فقط). الترتيب: الجهة المُحمَّلة على أمر العمل ← وإلا الشريك الداخلي من الإعداد <code>Maintenance.InternalIssuePartnerId</code> ← وإلا رفض.</p>
+        <div class="example">إصلاح رافعة الشركة: الشريك "الشركة – استهلاك داخلي"، والقيد مصروف صيانة آلات / مخزون، ولا يُطالب أحد بشيء.</div>
+      </div>
+
+      <div class="card">
+        <span class="decision-id">7</span>
+        <h3>تكلفة العمالة للتقارير فقط</h3>
+        <p>لا تُرحَّل محاسبيًا. الرواتب تبقى مسؤولية وحدة الرواتب. تظهر تكلفة العمالة في ربحية أمر العمل وتاريخ الأصل.</p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="billing">
+      <h2>٩. الفوترة والعربون</h2>
+
+      <div class="card">
+        <h3>فاتورة خدمة مرحَّلة ومقفلة</h3>
+        <ul>
+          <li>تُنشأ عبر خدمة تكامل المبيعات كفاتورة من نوع <b>خدمة</b>، فلا تحرّك المخزون (القطع صُرفت بسند الصيانة).</li>
+          <li>حساب الإيراد لكل سطر من بطاقة المادة/الخدمة، وإلا الإعداد العام.</li>
+          <li>تُنشأ <b>مرحَّلة</b> ولا تُعدَّل أبدًا. التصحيح: إلغاء في المبيعات ← إعادة فتح الفوترة في أمر العمل ← فاتورة جديدة.</li>
+          <li>أي مبلغ مدفوع (كامل أو جزئي) يمنع إلغاء الفاتورة.</li>
+        </ul>
+        <div class="example">اكتشف المحاسب خطأ في سعر العمالة بعد الترحيل: يلغي الدفعة أولًا، ثم يلغي الفاتورة، ثم يعيد فتح الفوترة في أمر العمل، ويصحح السعر، ويُصدر فاتورة جديدة برقم دفعة فوترة جديد.</div>
+      </div>
+
+      <div class="card">
+        <span class="decision-id">8</span>
+        <h3>العربون: سند قبض على الحساب (وليس ARDownPayment)</h3>
+        <p><code>ARDownPayment</code> موجود كرمز فقط وغير منفذ. القبض على الحساب منفذ ويُقيَّد على حساب العميل، ثم يُخصَّص للفاتورة.</p>
+        <div class="table-wrap"><table>
+          <tr><th>المرحلة</th><th>ما يحدث</th></tr>
+          <tr><td>العربون المطلوب</td><td>نسبة أو مبلغ على أمر العمل، حسب الورشة أو نوع الخدمة</td></tr>
+          <tr><td>القبض</td><td>زر في أمر العمل يُنشئ سند قبض على الحساب مربوطًا بأمر العمل</td></tr>
+          <tr><td>شرط البدء</td><td>اختياري: لا يبدأ أمر العمل قبل اكتمال العربون</td></tr>
+          <tr><td>الفاتورة</td><td>يُخصَّص العربون غير المخصص للفاتورة تلقائيًا</td></tr>
+          <tr><td>إلغاء الفاتورة</td><td>يُعكس التخصيص أولًا، فيعود العربون رصيدًا للعميل</td></tr>
+          <tr><td>إلغاء أمر العمل</td><td>يبقى العربون على الحساب: يُسترد بسند دفع أو يُخصَّص لاحقًا</td></tr>
+        </table></div>
+        <p><span class="badge ok">محسوم</span> لا ضريبة على الدفعة المقدمة، والعربون يظهر رصيدًا دائنًا على حساب العميل نفسه.</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="approval">
+      <h2>١٠. قواعد اعتماد التقدير</h2>
+      <p>عبر Elsa: إرسال التقدير ينشئ طلب اعتماد ← مهمة للمعتمِد ← قرار ← أمر في وحدة الصيانة يعيد التحقق من كل شيء.</p>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>القاعدة</th><th>مثال</th></tr>
+        <tr><td>1</td><td>يلزم الاعتماد إذا تحقق أي شرط: إجمالي فوق حد، خصم سطر فوق حد، حسن نية أو تجاوز ضمان منتهٍ، صيانة داخلية فوق حد. ما دون ذلك يُعتمد تلقائيًا.</td><td>حد 1,000,000 وتقدير 2,000,000 ← يحتاج اعتمادًا</td></tr>
+        <tr><td>2</td><td>المستويات تُضبط من الإعدادات</td><td>حتى 5 ملايين: مدير الورشة · فوقها: مدير الورشة ثم المالي</td></tr>
+        <tr><td>3</td><td>لا يعتمد المُقدِّم تقديره بنفسه</td><td>مدير الورشة كتب التقدير ← يذهب لزميل أو للمستوى الأعلى</td></tr>
+        <tr><td>4</td><td>موافقة العميل منفصلة عن الاعتماد الداخلي</td><td>تُسجَّل: التوقيع، القناة (حضوري/هاتف/واتساب)، التاريخ</td></tr>
+        <tr><td>5</td><td>ينتهي الاعتماد بانتهاء صلاحية التقدير أو انتهاء الضمان</td><td>صلاحية 15 يومًا مرت قبل موافقة العميل ← نسخة واعتماد جديدان</td></tr>
+        <tr><td>6</td><td>يجوز سحب الطلب بصلاحية</td><td>اكتشف الفني قطعة إضافية ← سحب وتعديل وإعادة إرسال</td></tr>
+        <tr><td>7</td><td>إصلاحات Core للمهام (G1–G3) مطلوبة، والصيانة تتحقق بنفسها حتى تُنفَّذ</td><td>هوية المعتمِد من الخادم لا من الطلب</td></tr>
+        <tr><td>8</td><td>وضع الاعتماد لكل مؤسسة: <code>Elsa</code> · <code>DirectTask</code> · <code>Disabled</code></td><td>مستأجر بلا Elsa ← مهام مباشرة أو اعتماد معطّل</td></tr>
+      </table></div>
+    </section>
+
+    <!-- 10 -->
+    <section id="hours">
+      <h2>١١. ساعات العمل (نسخة مبسطة)</h2>
+      <p>أجر الساعات الإضافية يُحسب من حضور HR وحده، وتكلفة العمالة للتقارير فقط؛ لذلك لا تُرسل ساعات الصيانة إلى الرواتب في النسخة الأولى.</p>
+      <ol>
+        <li>يسجل الفني ساعاته على أمر العمل (تاريخ، ساعات، تصنيف عادي/إضافي يدويًا، العملية).</li>
+        <li>يؤكدها المشرف عند إكمال أمر العمل.</li>
+        <li>التكلفة = الساعات × معدل قياسي حسب الوظيفة أو المهارة (لا تُقرأ رواتب).</li>
+        <li>تقرير شهري يقارن ساعات أوامر العمل بحضور HR.</li>
+      </ol>
+      <div class="example">أحمد سجّل 210 ساعة على أوامر العمل وحضوره في HR 180 ساعة ← فرق 30 ساعة يظهر للمراجعة. لا يتغير راتبه بسبب ذلك.</div>
+      <p class="meta">مؤجَّل إلى أن يُقرَّر أن ساعات الصيانة تؤثر في الراتب: الدفعة الشهرية، الاعتماد المزدوج، سجل الاستقبال في الرواتب، والتعديلات بأثر رجعي.</p>
+    </section>
+
+    <!-- scheduling -->
+    <section id="scheduling">
+      <h2>١٢. جدولة الصيانة والفنيين</h2>
+      <p><span class="badge ok">معتمد — 7 نوفمبر 2026</span> تُجدول أوامر العمل في وحدة الجدولة الموجودة <code>Enki.Scheduling</code> ضمن النسخة الأولى، فيكون لكل فني <b>تقويم واحد</b> يجمع التوصيل والتركيب والصيانة. الصيانة لا تبني جدولة خاصة بها.</p>
+
+      <h3>ما توفره وحدة الجدولة اليوم</h3>
+      <ul>
+        <li><b>الموارد:</b> فني أو سائق أو مركبة، مربوط بموظف HR، مع منطقة وحد أقصى للمهام اليومية.</li>
+        <li><b>الحجز:</b> تاريخ ووقت أو نافذة زمنية، وفني أو أكثر؛ مجدول ← قيد التنفيذ ← مكتمل، أو أُعيدت جدولته / أُلغي مع السبب.</li>
+        <li><b>فحوص تلقائية:</b> منع الحجز المتداخل للفني، أيام الحظر (إجازة)، سعة النافذة الزمنية لكل منطقة.</li>
+        <li><b>تقرير خط السير اليومي</b> لكل مورد.</li>
+      </ul>
+
+      <h3>نوعان من الجدولة</h3>
+      <div class="table-wrap"><table>
+        <tr><th></th><th>عمل ورشة (الأصل يأتي إلينا)</th><th>صيانة ميدانية (نذهب إلى الأصل)</th></tr>
+        <tr><td>مثال</td><td>سيارة أحمد على الرافعة 2، الأحد 9:00–13:00</td><td>مكيف زيد في المنصور، علي وحسن، نافذة الصباح</td></tr>
+        <tr><td>الموارد</td><td>فني + رافعة</td><td>فني أو أكثر + مركبة</td></tr>
+        <tr><td>العنوان</td><td>لا يلزم</td><td>عنوان الموقع والمنطقة وجهة الاتصال من أمر العمل</td></tr>
+        <tr><td>خط السير</td><td>لا يلزم</td><td>تقرير خط السير اليومي</td></tr>
+      </table></div>
+
+      <h3>ربط الحالات</h3>
+      <div class="table-wrap"><table>
+        <tr><th>في وحدة الجدولة</th><th>أمر العمل</th></tr>
+        <tr><td>إنشاء الحجز</td><td>مخطط ← <b>مجدول</b> (يُحفظ رقم الحجز والموعد والفنيون)</td></tr>
+        <tr><td>بدء الزيارة</td><td>مجدول ← <b>قيد التنفيذ</b></td></tr>
+        <tr><td>إكمال الزيارة</td><td>تُسجَّل العمليات المنجزة؛ إكمال أمر العمل يبقى في الصيانة (فحص، صرف، فوترة)</td></tr>
+        <tr><td>إلغاء الحجز</td><td>مجدول ← <b>مخطط</b></td></tr>
+        <tr><td>إلغاء أمر العمل</td><td>يُلغى الحجز النشط تلقائيًا</td></tr>
+      </table></div>
+
+      <div class="example">
+        <b>صيانة ميدانية:</b> مكيفان في المنصور يوم الاثنين (WO-301 لزيد و WO-305 لهبة). يحجز المنسق رحلة واحدة: علي وحسن + المركبة 3، نافذة 8–12. يبدأ علي الساعة 8:20 فيصبح الأمران "قيد التنفيذ". ينتهي WO-301، وWO-305 ينتظر ضاغطًا فيبقى مفتوحًا ويُحجز مرة أخرى الأربعاء.
+      </div>
+      <div class="example">
+        <b>عمل ورشة:</b> WO-302 محجوز الأحد 9–1 للفني أحمد والرافعة 2. محاولة حجز الرافعة 2 الساعة 11 لعمل آخر تُرفض لأنها متداخلة.
+      </div>
+      <div class="example">
+        <b>إجازة:</b> تعتمد HR إجازة علي من 12 إلى 14 نوفمبر، فيُنشأ يوم حظر تلقائيًا، ولا يمكن حجزه يوم 13.
+      </div>
+
+      <h3>القرارات المعتمدة</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>القرار</th></tr>
+        <tr><td>Q-S1</td><td>الربط مع وحدة الجدولة داخل النسخة الأولى</td></tr>
+        <tr><td>Q-S2</td><td>أعمال الورشة والصيانة الميدانية كلاهما في الجدولة — تقويم واحد لكل فني</td></tr>
+        <tr><td>Q-S3</td><td>أسطر الحجز = عمليات أمر العمل، لتعرف ما أُنجز في كل زيارة</td></tr>
+        <tr><td>Q-S4</td><td>يحجز موظف الاستقبال من أمر العمل، والمنسق من وحدة الجدولة</td></tr>
+        <tr><td>Q-S5</td><td>أوامر الصيانة الوقائية تذهب إلى قائمة "بانتظار الجدولة"، لا تُحجز تلقائيًا</td></tr>
+        <tr><td>Q-S6</td><td>في الإصدار الأول: ربط إجازات HR والرافعات؛ المهارات لاحقًا</td></tr>
+      </table></div>
+
+      <h3>تقارير الجدولة</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>مثال</th></tr>
+        <tr><td>انشغال الفني</td><td>علي محجوز 92%، حسن 55%</td></tr>
+        <tr><td>الساعات المحجوزة مقابل المسجلة</td><td>WO-302 محجوز 4 ساعات وسُجّل 6 ← إعادة تقدير هذا النوع</td></tr>
+        <tr><td>الوصول في الموعد (ميداني)</td><td>81% من الزيارات بدأت داخل النافذة</td></tr>
+        <tr><td>أسباب إعادة الجدولة والإلغاء</td><td>40% "العميل غير موجود" ← اتصال تأكيد قبل يوم</td></tr>
+        <tr><td>أوامر معتمدة لم تُجدول</td><td>9 أوامر لم تُحجز منذ أكثر من يومين</td></tr>
+      </table></div>
+      <p class="meta">المطلوب من فريق الجدولة للنسخة الأولى: فتح أنواع المستندات لأمر العمل (SC1)، عقد تكامل للحجز (SC2)، حدث "بدأ الحجز" (SC3)، نوع مورد "رافعة" (SC5)، ربط إجازات HR (SC6)، وتعريف أمر العمل في الصفحات والتقارير (SC9). لاحقًا: المهارات، السعة بالساعات، لوحة التقويم.</p>
+    </section>
+
+    <!-- 11 -->
+    <section id="general">
+      <h2>١٣. قرارات عامة</h2>
+      <div class="table-wrap"><table>
+        <tr><th>البند</th><th>القرار</th><th>مثال</th></tr>
+        <tr><td>4</td><td>مالك الأصل قد يختلف عن الشريك المُفوتَر (الافتراضي: المالك، والتغيير بصلاحية)</td><td>شركة تأجير تملك السيارة والمستأجر يدفع الإصلاح</td></tr>
+        <tr><td>9</td><td>حقول ثابتة للمشترك وللسيارة + حقل JSON بقالب لكل نوع أصل</td><td>مكيف: BTU ونوع الغاز · مولد: KVA</td></tr>
+        <tr><td>10</td><td>جدولة أوامر العمل في وحدة الجدولة ضمن النسخة الأولى — انظر القسم ١٢</td><td>تقويم واحد لكل فني يجمع التوصيل والتركيب والصيانة</td></tr>
+        <tr><td>11</td><td>وحدة العقود تملك التغطية وتوفر عقد قراءة؛ مؤجَّل</td><td>عقد سنوي: عمالة مجانية وخصم 20% على القطع</td></tr>
+        <tr><td>12</td><td>ربط اختياري بالأصل الثابت، دون أثر على الإهلاك؛ مؤجَّل</td><td>تكلفة الصيانة لكل أصل ثابت</td></tr>
+        <tr><td>13</td><td>إعادة العمل خلال 30 يومًا (قابلة للضبط) = أمر جديد مرتبط بتغطية حسن نية؛ مصير القطع المُزالة يُسجَّل</td><td>تكرر العطل بعد 5 أيام ← أمر "إعادة عمل" بلا فاتورة</td></tr>
+        <tr><td>14</td><td>النسخة الأولى: تقييد البيانات على مستوى المؤسسة؛ الورشة لاحقًا</td><td>فنيو بغداد لا يرون أوامر البصرة (لاحقًا)</td></tr>
+      </table></div>
+    </section>
+
+    <!-- reports -->
+    <section id="reports">
+      <h2>١٤. التقارير</h2>
+      <p>مجموعة تقارير لتطوير العمل، مقسمة حسب السؤال الذي يجيب عنه كل تقرير. <span class="badge ok">MVP</span> تُبنى مع المراحل P5–P8، و<span class="badge warn">لاحقًا</span> مع اللوحات (P12) والتحليلات (P13).</p>
+
+      <h3>أ) التشغيل اليومي — ماذا يحدث الآن؟</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>مثال</th><th>المرحلة</th></tr>
+        <tr><td>أوامر العمل حسب الحالة</td><td>12 قيد التنفيذ، 5 بانتظار قطع، 3 بانتظار العميل</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>أوامر العمل المتأخرة</td><td>أمر 187 متأخر 4 أيام — السبب: بانتظار قطع</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>أعمار الحالات</td><td>متوسط "بانتظار موافقة العميل" 3.2 يوم ← المتابعة ضعيفة</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>فشل الصرف التلقائي</td><td>أمران فشل صرفهما لعدم وجود فترة محاسبية مفتوحة</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>القطع المحجوزة</td><td>4 فلاتر محجوزة منذ 20 يومًا على أمر متوقف</td><td><span class="badge ok">MVP</span></td></tr>
+      </table></div>
+
+      <h3>ب) أداء الورشة والفنيين</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>المعادلة</th><th>مثال</th></tr>
+        <tr><td>إنتاجية الفني</td><td>ساعات أوامر العمل ÷ ساعات الحضور</td><td>أحمد 85%، علي 60%</td></tr>
+        <tr><td>فرق الساعات مع الحضور</td><td>ساعات الصيانة − حضور HR</td><td>أحمد 210 مقابل 180 = 30 ساعة</td></tr>
+        <tr><td>متوسط زمن الإصلاح</td><td>الإكمال − البدء، حسب نوع الصيانة</td><td>تغيير زيت 1.5 ساعة، محرك 3 أيام</td></tr>
+        <tr><td>حِمل الورشة</td><td>أوامر مفتوحة لكل فني أو ورشة</td><td>ورشة الكهرباء: 18 أمرًا مفتوحًا</td></tr>
+      </table></div>
+
+      <h3>ج) الجودة</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>المعادلة</th><th>مثال</th></tr>
+        <tr><td>الإصلاح من أول مرة</td><td>أوامر بلا إعادة عمل خلال 30 يومًا ÷ الكل</td><td>92%</td></tr>
+        <tr><td>إعادة العمل حسب الفني وكود العطل</td><td>أوامر إعادة العمل مجمّعة</td><td>6 إعادات فرامل، 4 منها لفني واحد ← تدريب</td></tr>
+        <tr><td>أكثر الأعطال تكرارًا</td><td>حسب كود العطل والفئة والموديل</td><td>كامري 2021: 14 حالة فرامل ← عطل نمطي</td></tr>
+      </table></div>
+
+      <h3>د) المالية والربحية</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>المعادلة</th><th>مثال</th></tr>
+        <tr><td>ربحية أمر العمل</td><td>الإيراد − القطع − العمالة (معدل قياسي)</td><td>إيراد 235,000، هامش 95,000 (40%)</td></tr>
+        <tr><td>دقة التقدير</td><td>المفوتَر ÷ المقدَّر</td><td>250,000 مقابل 235,000 = 94%</td></tr>
+        <tr><td>التكلفة حسب نوع المصروف</td><td>أسطر الصرف حسب النوع</td><td>آلات 4.2 مليون، ضمان 1.8، حسن نية 0.6</td></tr>
+        <tr><td>تكلفة الضمان وحسن النية</td><td>حسب الموديل والمورد والفني</td><td>ضاغط واحد = 70% من تكلفة الضمان ← مطالبة المورد</td></tr>
+        <tr><td>العربون غير المخصص</td><td>عربون مقبوض بلا فاتورة</td><td>3 عملاء لهم 450,000 على أوامر ملغاة ← رد أو تخصيص</td></tr>
+        <tr><td>مكتمل بلا فاتورة</td><td>مكتمل وحالة الفوترة "غير مفوتر"</td><td>7 أوامر منذ أكثر من 3 أيام ← إيراد متأخر</td></tr>
+        <tr><td>إعادة تصنيف المصروف (مؤقت)</td><td>الحساب المقصود مقابل تكلفة المبيعات حتى يُنفَّذ I2</td><td>1.1 مليون صيانة داخلية قُيدت على تكلفة المبيعات</td></tr>
+      </table></div>
+
+      <h3>هـ) الأصول والعملاء</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>مثال</th><th>المرحلة</th></tr>
+        <tr><td>تاريخ الأصل</td><td>سيارة أحمد: 3 زيارات، 470,000</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>التكلفة التراكمية للأصل</td><td>الرافعة كلفت 9 ملايين هذه السنة ← الاستبدال أوفر</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>أكبر العملاء</td><td>10 عملاء = 45% من الإيراد</td><td><span class="badge ok">MVP</span></td></tr>
+        <tr><td>ضمانات تنتهي قريبًا</td><td>23 مكيفًا خلال 60 يومًا ← عرض عقد صيانة</td><td><span class="badge warn">لاحقًا</span></td></tr>
+        <tr><td>زمن توقف المعدات</td><td>المولد متوقف 36 ساعة هذا الشهر (يحتاج بيانات جديدة)</td><td><span class="badge warn">لاحقًا</span></td></tr>
+      </table></div>
+
+      <h3>و) المخزون والقطع</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>مثال</th></tr>
+        <tr><td>استهلاك القطع</td><td>320 فلترًا شهريًا ← تحديث حد إعادة الطلب</td></tr>
+        <tr><td>أوامر بانتظار قطع</td><td>5 أوامر تنتظر الحساس نفسه ← شراء بالجملة</td></tr>
+        <tr><td>القطع المُزالة ومصيرها</td><td>12 ضاغطًا أُرجعت للمورد ← متابعة المطالبات</td></tr>
+      </table></div>
+
+      <h3>ز) الاعتماد</h3>
+      <div class="table-wrap"><table>
+        <tr><th>التقرير</th><th>مثال</th></tr>
+        <tr><td>زمن الاعتماد لكل معتمِد</td><td>المدير المالي متوسطه يومان ← عنق زجاجة</td></tr>
+        <tr><td>نسبة الرفض والسحب</td><td>30% من تقديرات فني واحد تُرفض</td></tr>
+        <tr><td>موافقة العميل</td><td>18% من التقديرات تنتهي صلاحيتها دون رد ← متابعة</td></tr>
+      </table></div>
+
+      <div class="note">
+        بيانات يجب تسجيلها من النسخة الأولى، وإلا لا يمكن بناء هذه التقارير لاحقًا:
+        <ol>
+          <li><b>كود العطل وسبب الإصلاح</b> — <b>إلزامي</b> عند إكمال أمر العمل.</li>
+          <li>سجل الحالات بالوقت.</li>
+          <li>قراءة العداد عند الاستلام والتسليم.</li>
+          <li>التاريخ المخطط لكل أمر عمل.</li>
+          <li><b>سبب الرفض أو السحب</b> في الاعتماد — <b>إلزامي</b>.</li>
+          <li>رابط "إعادة عمل" بالأمر الأصلي.</li>
+        </ol>
+      </div>
+      <p class="meta">طريقة البناء: نمط تقارير المشروع (كشف الحساب): مدير للتقرير، تصدير Excel و PDF، صفحة Vue. التقارير التشغيلية الأساسية (التأخير، المكتمل بلا فاتورة، فشل الصرف، العربون غير المخصص، الحجوزات) تُبنى مع P5–P8، وكل تقرير يطبّق صلاحيات البيانات على مستوى المؤسسة.</p>
+    </section>
+
+    <!-- 14 -->
+    <section id="prereq">
+      <h2>١٥. متطلبات الوحدات الأخرى</h2>
+      <p>تغييرات يملكها فريق كل وحدة، ولا تُنفَّذ داخل الصيانة.</p>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>الوحدة</th><th>الطلب</th><th>الحالة</th></tr>
+        <tr><td>I1</td><td>المخزون</td><td>خدمة تكامل سند الصرف (إنشاء + بحث بالمستند الأصل)</td><td><span class="badge ok">منجز</span></td></tr>
+        <tr><td>I2</td><td>المخزون</td><td>حساب مصروف لكل سطر لمستندات الصيانة</td><td><span class="badge warn">مطلوب — له بديل</span></td></tr>
+        <tr><td>I3</td><td>المخزون</td><td>حجز ورفع حجز حسب المستند الأصل</td><td><span class="badge warn">مطلوب — له بديل</span></td></tr>
+        <tr><td>I4</td><td>المخزون</td><td>شريك اختياري في سند الصرف</td><td><span class="badge info">لاحقًا</span></td></tr>
+        <tr><td>S1</td><td>المبيعات</td><td>ترحيل إجباري عند الإنشاء من التكامل</td><td><span class="badge warn">مطلوب — له بديل</span></td></tr>
+        <tr><td>S2</td><td>المبيعات</td><td>استعلام حالة الفاتورة (يشمل الملغاة)</td><td><span class="badge ok">منجز</span></td></tr>
+        <tr><td>S3–S6</td><td>المبيعات</td><td>حالة السداد، منع إلغاء المدفوعة، Back Order، تعديل المسودة</td><td><span class="badge ok">منجز</span></td></tr>
+        <tr><td>F1–F3</td><td>المالية</td><td>ربط سند القبض بأمر العمل، عقد التخصيص، استعلام العربون</td><td><span class="badge warn">مطلوب — له بديل يدوي</span></td></tr>
+        <tr><td>C1</td><td>Core</td><td>إصلاحات المهام G1–G3</td><td><span class="badge warn">موصى به</span></td></tr>
+        <tr><td>C2</td><td>Core</td><td>تسجيل الرموز 260–262</td><td><span class="badge info">مع التنفيذ</span></td></tr>
+        <tr><td>A1</td><td>الأصول</td><td>نقل الرموز إلى 240–259 وتغيير البادئة ASL المكررة</td><td><span class="badge warn">قبل تنفيذ الأصول</span></td></tr>
+        <tr><td>SC1–3, 5, 6, 9</td><td>الجدولة</td><td>فتح أنواع المستندات لأمر العمل، عقد الحجز، حدث البدء، الرافعات، ربط إجازات HR، صفحات وتقارير تعرف أمر العمل</td><td><span class="badge warn">مطلوب للنسخة الأولى</span></td></tr>
+        <tr><td>SC4, 7, 8</td><td>الجدولة</td><td>المهارات، السعة بالساعات، لوحة التقويم</td><td><span class="badge info">لاحقًا</span></td></tr>
+        <tr><td>FE1–2</td><td>الواجهة</td><td>رموز الشاشات 90068–90079، وتوحيد تعداد المستندات</td><td><span class="badge warn">مطلوب</span></td></tr>
+        <tr><td>—</td><td>HR / الرواتب</td><td>لا تغيير مطلوب</td><td><span class="badge ok">لا شيء</span></td></tr>
+      </table></div>
+      <div class="note">لم يعد أي متطلب يوقف النسخة الأولى بلا بديل: I1 و S2 نُفّذا.</div>
+    </section>
+
+    <!-- 13 -->
+    <section id="done">
+      <h2>١٦. ما نُفّذ حتى الآن (غير مرسل بـ commit)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>إصلاحات المبيعات</h3>
+          <ul>
+            <li>حالة السداد تتبع سند القبض وتخصيص الدفعة وعكسهما</li>
+            <li>الحساب الفارغ في تعديل المسودة يُعامل كغير موجود</li>
+          </ul>
+          <p class="meta">اختبارات: 5 لحالة السداد</p>
+        </div>
+        <div class="card">
+          <h3>I1 — سند الصرف</h3>
+          <ul>
+            <li><code>IGoodsIssueIntegrationService</code> في Core</li>
+            <li>التنفيذ في المخزون عبر أمر الصرف المعتاد</li>
+          </ul>
+          <p class="meta">اختبارات: 7 للتحويل + 3 مع قاعدة بيانات</p>
+        </div>
+        <div class="card">
+          <h3>S2 — حالة الفاتورة</h3>
+          <ul>
+            <li><code>GetStatusByIdsAsync</code> و <code>FindByBaseAsync</code></li>
+            <li>تعطيل فلتر الحذف الناعم لرؤية الملغاة</li>
+          </ul>
+          <p class="meta">اختبارات: 4 مع قاعدة بيانات</p>
+        </div>
+        <div class="card">
+          <h3>DocBase</h3>
+          <ul>
+            <li>7 اختبارات لتوزيع خصم الرأس وتصفيره</li>
+          </ul>
+          <p class="meta">كل المشروع: المخزون 54/54 · تطبيق المبيعات 37/38 (فشل قديم في التسعير)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 -->
+    <section id="roadmap">
+      <h2>١٧. مراحل التنفيذ</h2>
+      <p>النسخة الأولى = P0 إلى P8 (عدا تغطية العقود). التسلسل: P2 ← P3 ← P4 ← P5 ← P6 ← P7 ← P8.</p>
+      <div class="table-wrap"><table>
+        <tr><th>المرحلة</th><th>الهدف</th><th>معيار القبول</th></tr>
+        <tr><td>P0</td><td>القرارات والرموز</td><td><span class="badge ok">مكتملة</span></td></tr>
+        <tr><td>P1</td><td>البيانات الرئيسية والإعدادات (أنواع، أعطال، عمليات، ورش، أنواع مصاريف)</td><td>CRUD بالصلاحيات والعزل</td></tr>
+        <tr><td>P2</td><td>سجل الأصول، بيانات السيارات، العدادات</td><td>رقم تسلسلي فريد لكل مؤسسة، دون ربط بالمخزون</td></tr>
+        <tr><td>P3</td><td>طلب الصيانة والاستلام</td><td>استلام لثلاثة أنواع أصول، منها بلا رقم تسلسلي</td></tr>
+        <tr><td>P4</td><td>التقدير والاعتماد</td><td>مراجعة/اعتماد/رفض، وتغطية لكل سطر</td></tr>
+        <tr><td>P5</td><td>أمر العمل وحالاته</td><td>انتقالات قانونية فقط مع سجل تاريخي</td></tr>
+        <tr><td>P6</td><td>القطع والعمالة والساعات</td><td>لقطة تكلفة ومجاميع صحيحة</td></tr>
+        <tr><td>P7</td><td>المخزون: حجز، صرف، إرجاع</td><td>صرف مرة واحدة، لا صرف مكرر عند إعادة المحاولة</td></tr>
+        <tr><td>P8</td><td>الفوترة والعربون والربحية</td><td>فاتورة مرة واحدة، لا قيد مكرر</td></tr>
+        <tr><td>P9–P14</td><td>الضمان والعقود، الوقائية، الجودة والتسليم، اللوحات، التقارير، التجهيز للإطلاق</td><td>لاحقًا</td></tr>
+      </table></div>
+    </section>
+
+    <!-- 15 -->
+    <section id="risks">
+      <h2>١٨. ما بقي غير محقق</h2>
+      <ul>
+        <li>إنشاء سند الصرف فعليًا عبر <code>CreateGoodsIssueAsync</code> لم يُجرَّب في التطبيق الشغّال (يمر بخدمات الترحيل).</li>
+        <li>وجود حقل كمية محجوزة في رصيد المخزون يمكن استخدامه للحجز (I3) — يُتحقق منه مع فريق المخزون.</li>
+        <li>الفواتير المسددة قبل إصلاح حالة السداد تبقى حالتها قديمة حتى أول حركة؛ قد تحتاج تحديثًا لمرة واحدة.</li>
+        <li>تعديل خصم الرأس في DocBase يحتاج اختبار انحدار على مستندات المشتريات والمخزون الفعلية.</li>
+        <li>بعض المراجع الخارجية (SAP/Oracle) لم تُراجع من الوثائق الرسمية مباشرة.</li>
+      </ul>
+    </section>
+
+    <footer>
+      مُولَّد من الخطة المعتمدة بتاريخ 31 أكتوبر 2026. المرجع: <code>docs/planning/maintenance/maintenance-management-implementation-plan.md</code> (الأقسام §20.1.4، §21، §33، §36.15، §37).
+    </footer>
+  </main>
+</div>
+</body>
+</html>
