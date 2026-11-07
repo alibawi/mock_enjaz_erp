@@ -178,3 +178,16 @@ Append-only. Read from the top before any work; add an entry after every task.
 - **Verification:** `tsc -b` clean, build OK, `npm run check` passes (assets, contracts, maintenance 66/66). Demo data reset afterwards.
 - **Known limits (documented, not defects):** utilisation and productivity read low because the seed holds ~45 sample jobs against full attendance; "Later" catalog reports are not built; three stale hot-reload console entries from area 6 may remain in a long-running dev tab (they never recur on a fresh load).
 - **Next step:** ⏸ final owner review of the whole maintenance mock. Nothing committed.
+
+## 2026-11-08 — Reports visible from the menu for every role (owner feedback)
+
+- **Owner feedback:** "لم تضيف تقارير إلى الصيانة" — the 33 reports existed, but the demo opens as the service advisor, whose role has no `Reports.View` in spec §5, so the sidebar hid «التقارير».
+- **Decision (owner, 2026-11-08):** show the reports entry to every role; the permission matrix stays as in spec §5.
+- **Changed:** `components/Layout.tsx` — the reports nav item no longer carries `perm`. `pages/Reports.tsx` — a role without the permission sees the page header, the roles that may open it (read live from the matrix) and one-click "الدخول كـ …" buttons for those users.
+- **Verification:** `tsc -b` clean, build OK, `npm run check` passes. Browser (fresh data, advisor): «التقارير» now in the sidebar → message lists the five roles and their users → "الدخول كـ حيدر" opens the 33 reports. Demo data reset.
+
+## 2026-11-08 — Report groups in the sidebar (owner feedback)
+
+- **Owner request:** "إظهار التقارير في القائمة تحت مجموعة التقارير".
+- **Changed:** `components/Layout.tsx` — 8 `sub` entries under «التقارير» (التشغيل اليومي، أداء الورشة والفنيين، الجودة، المالية والربحية، الأصول والعملاء، المخزون والقطع، الاعتماد، الجدولة) → `/reports?g=<group>`; listing all 33 reports individually would make the menu too long. `pages/Reports.tsx` — `g` filters the report list to that group (first report opens), with "عرض كل مجموعات التقارير (33)" to clear it. `src/shell/Sidebar.tsx` — sub-entry highlighting reads the entry's own query key (`r` for the assets reports as before, `g` for maintenance). `pages/Home.tsx` — sub entries are not repeated as hub cards.
+- **Verification:** `tsc -b` clean, build OK, `npm run check` passes; browser: the 8 groups show under «التقارير» for every role, «المالية والربحية» opens the finance reports with the menu item highlighted, picking «الذمم المفتوحة» keeps the group; no console errors. Demo data reset.

@@ -36,8 +36,10 @@ function ModuleGroup({ base, title, icon: Icon, entries, endPaths, collapsed }: 
             if (sub) {
               if (collapsed) return null
               const [path, query = ''] = full(to).split('?')
-              const wanted = new URLSearchParams(query).get('r')
-              const current = loc.pathname === path && (new URLSearchParams(loc.search).get('r') ?? 'register') === wanted
+              // the sub-entry's own query key: `r` (a report, assets) or `g` (a report group, maintenance)
+              const [key, wanted] = [...new URLSearchParams(query).entries()][0] ?? ['r', '']
+              const value = new URLSearchParams(loc.search).get(key) ?? (key === 'r' ? 'register' : null)
+              const current = loc.pathname === path && value === wanted
               return (
                 <Link key={to} to={full(to)} className={`flex items-center gap-1 rounded-md py-1 pe-2 ps-12 text-[12px] ${current ? 'font-semibold text-navy' : 'text-gray-500 hover:text-navy'}`}>
                   <EntryIcon className="h-3 w-3 shrink-0" />{label}

@@ -1,5 +1,5 @@
 import {
-  BarChart3, Bell, CalendarClock, CalendarDays, CalendarOff, ChevronDown, ChevronLeft, ClipboardCheck, ClipboardList, FileCheck2, FileSearch,
+  Activity, BadgeCheck, BarChart3, Bell, Building2, Package, Wallet, CalendarClock, CalendarDays, CalendarOff, ChevronDown, ChevronLeft, ClipboardCheck, ClipboardList, FileCheck2, FileSearch,
   FileSignature, Gauge, GraduationCap, History, Inbox, Languages, LayoutDashboard, ListChecks, Lock, Monitor, Move, PackageMinus, Plus, Receipt,
   RotateCcw, Route, Search, Settings2, Timer, UserCog, Wrench, ZapOff, type LucideIcon,
 } from 'lucide-react'
@@ -13,7 +13,8 @@ import type { Perm } from '../data/types'
 import { useClickAway } from '../lib/useClickAway'
 import { Confirm } from './ui'
 
-export interface MaintNavItem { to: string; label: string; icon: LucideIcon; section?: string; soon?: boolean; perm?: Perm }
+/** `sub` entries render as indented links under the item before them (report groups under «التقارير»). */
+export interface MaintNavItem { to: string; label: string; icon: LucideIcon; section?: string; soon?: boolean; perm?: Perm; sub?: boolean }
 
 /** Sidebar group of the maintenance module (rendered by src/shell/Sidebar.tsx); `soon` items are shown but not clickable. */
 export const maintenanceNav: MaintNavItem[] = [
@@ -30,7 +31,15 @@ export const maintenanceNav: MaintNavItem[] = [
   { to: '/assets', label: 'بطاقات الأصول', icon: ClipboardList, section: 'الأصول' },
   { to: '/billing', label: 'الفواتير والعربون', icon: Receipt, section: 'الفوترة' },
   { to: '/billing/issues', label: 'سندات صرف القطع', icon: PackageMinus },
-  { to: '/reports', label: 'التقارير', icon: BarChart3, section: 'التقارير', perm: 'Reports.View' },
+  { to: '/reports', label: 'التقارير', icon: BarChart3, section: 'التقارير' }, // visible to every role; the page explains who may open it
+  { to: '/reports?g=ops', label: 'التشغيل اليومي', icon: Activity, sub: true },
+  { to: '/reports?g=perf', label: 'أداء الورشة والفنيين', icon: Gauge, sub: true },
+  { to: '/reports?g=quality', label: 'الجودة', icon: BadgeCheck, sub: true },
+  { to: '/reports?g=finance', label: 'المالية والربحية', icon: Wallet, sub: true },
+  { to: '/reports?g=assets', label: 'الأصول والعملاء', icon: Building2, sub: true },
+  { to: '/reports?g=stock', label: 'المخزون والقطع', icon: Package, sub: true },
+  { to: '/reports?g=approval', label: 'الاعتماد', icon: ClipboardCheck, sub: true },
+  { to: '/reports?g=schedule', label: 'الجدولة', icon: CalendarDays, sub: true },
   { to: '/master-data', label: 'البيانات الرئيسية', icon: ListChecks, section: 'الإعداد' },
   { to: '/settings', label: 'إعدادات الصيانة', icon: Settings2 },
   { to: '/access', label: 'مصفوفة الصلاحيات', icon: Lock },

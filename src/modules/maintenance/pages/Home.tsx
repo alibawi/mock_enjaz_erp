@@ -32,7 +32,7 @@ const hints: Record<string, string> = {
 export default function Home() {
   const { db } = useStore()
   const t0 = today()
-  const screens = maintenanceNav.filter((n) => n.to !== '/').map((n) => ({ to: n.to, title: n.label, hint: hints[n.to] ?? 'قريباً', icon: n.icon, soon: n.soon }))
+  const screens = maintenanceNav.filter((n) => n.to !== '/' && !n.sub).map((n) => ({ to: n.to, title: n.label, hint: hints[n.to] ?? 'قريباً', icon: n.icon, soon: n.soon }))
   const open = db.workOrders.filter(isOpenWo)
   const byStatus = (['inProgress', 'waitingParts', 'waitingCustomer', 'qualityCheck'] as const).map((s) => `${woStatus[s].label} ${open.filter((w) => w.status === s).length}`).join(' · ')
   const notInvoiced = db.workOrders.filter((w) => w.status === 'completed' && w.billingStatus === 'notInvoiced')

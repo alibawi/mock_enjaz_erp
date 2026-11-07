@@ -6,7 +6,9 @@ import { Card } from '../components/ui'
 import { addDays, today } from '../data/asof'
 import { fmtDate, iqd, num } from '../data/format'
 import { groups, reports, type ColType, type GroupId, type Row } from '../data/reports'
+import { roleLabel } from '../data/permissions'
 import { useStore } from '../data/store'
+import type { RoleId } from '../data/types'
 import { useApi } from '../lib/useApi'
 import { Link, useNavigate, useSearchParams } from '../router'
 
@@ -24,7 +26,7 @@ const fmt = (v: unknown, t: ColType = 'text') => {
 
 /** Reports (S20): plan §28.1–28.7 + §38.6, grouped by the question they answer; period filter, bar chart, table, CSV. */
 export default function Reports() {
-  const { db, can } = useStore()
+  const { db, can, setUser } = useStore()
   const nav = useNavigate()
   const [params, setParams] = useSearchParams()
   const t0 = today()
@@ -36,8 +38,10 @@ export default function Reports() {
   const preset = params.get('p') ?? 'all'
   const from = params.get('from') ?? presets.find((x) => x.id === preset)?.from ?? '2026-08-01'
   const to = params.get('to') ?? t0
-  const id = params.get('r') ?? 'wo-status'
-  const def = reports.find((r) => r.id === id) ?? reports[0]
+  const g = params.get('g') as GroupId | null
+  const inGroup = g ? reports.filter((r) => r.group === g) : reports
+  const id = params.get('r') ?? inGroup[0]?.id ?? 'wo-status'
+  const def = inGroup.find((r) => r.id === id) ?? inGroup[0] ?? reports[0]
   const api = useApi(() => def.run(db, { from, to, today: t0 }), [id, from, to])
   const set = (patch: Record<string, string | null>) => { const p = new URLSearchParams(params); for (const [k, v] of Object.entries(patch)) { if (v === null) p.delete(k); else p.set(k, v) } setParams(p) }
   const res = def.run(db, { from, to, today: t0 })
@@ -50,7 +54,17 @@ export default function Reports() {
     a.click()
   }
 
-  if (!can('Reports.View')) return <EmptyBlock title="لا تملك صلاحية عرض التقارير" hint="التقارير لمدير الورشة والمنسق والمحاسب والمدير المالي." />
+  if (!can('Reports.View')) {
+    const allowed = (Object.keys(roleLabel) as RoleId[]).filter((r) => db.rolePerms[r]?.includes('Reports.View'))
+    return (
+      <div>
+        <PageHeader crumbs={[{ label: 'التقارير' }]} title="تقارير الصيانة" />
+        <EmptyBlock title="دورك الحالي لا يملك صلاحية عرض التقارير"
+          hint={`التقارير متاحة لـ: ${allowed.map((r) => roleLabel[r]).join('، ')}. بدّل المستخدم من القائمة أعلى الشاشة، أو امنح الصلاحية من «مصفوفة الصلاحيات».`}
+          action={<div className="flex flex-wrap justify-center gap-2">{db.users.filter((u) => allowed.includes(u.role) && u.role !== 'admin').map((u) => <button key={u.id} type="button" className="btn" onClick={() => setUser(u.id)}>الدخول كـ {u.name} ({roleLabel[u.role]})</button>)}</div>} />
+      </div>
+    )
+  }
   return (
     <div>
       <PageHeader crumbs={[{ label: 'التقارير' }]} title="تقارير الصيانة"
@@ -62,7 +76,8 @@ export default function Reports() {
       <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Card pad={false}>
           <nav className="max-h-[75vh] overflow-y-auto py-2 text-sm">
-            {groups.map((g) => (
+            {g && <button type="button" onClick={() => set({ g: null })} className="mb-1 block w-full px-3 py-1 text-start text-[12px] text-navy underline">عرض كل مجموعات التقارير ({reports.length})</button>}
+            {groups.filter((x) => !g || x.id === g).map((g) => (
               <div key={g.id} className="mb-2">
                 <div className="px-3 py-1 text-[11px] font-semibold text-gray-500">{g.label} <span className="font-normal text-gray-400">— {g.q}</span></div>
                 {reports.filter((r) => r.group === (g.id as GroupId)).map((r) => (
